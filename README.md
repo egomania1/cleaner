@@ -2,6 +2,8 @@
 
 A Windows desktop app that scans a drive, groups what it finds into safe-to-delete vs. review-first categories, and clears what you select.
 
+![Clean preview](docs/preview.png)
+
 ## Features
 
 - Scans user/system temp folders, Windows Error Reporting, browser caches (Chrome, Edge, Brave, Firefox), GPU shader caches (NVIDIA, AMD), leftover old versions of auto-updating apps (Discord, Slack), Spotify's local cache, and the Recycle Bin
