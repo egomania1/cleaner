@@ -1,3 +1,4 @@
+using Clean.App.ViewModels;
 using Clean.App.Views;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
@@ -9,7 +10,7 @@ namespace Clean.App;
 
 public sealed partial class MainWindow : Window
 {
-    private static readonly TimeSpan MinimumSplashDuration = TimeSpan.FromSeconds(1.5);
+    private static readonly TimeSpan MinimumSplashDuration = TimeSpan.FromSeconds(1.2);
 
     private static readonly Dictionary<string, PlaceholderContent> UpcomingPages = new()
     {
@@ -24,8 +25,11 @@ public sealed partial class MainWindow : Window
         ["settings"] = new("Paramètres", "Thème, options d'analyse, exclusions et confidentialité."),
     };
 
-    public MainWindow()
+    private readonly DashboardViewModel _dashboard;
+
+    public MainWindow(DashboardViewModel dashboard)
     {
+        _dashboard = dashboard;
         InitializeComponent();
         ConfigureWindow();
         Navigation.SelectedItem = DashboardItem;
@@ -50,7 +54,7 @@ public sealed partial class MainWindow : Window
 
     private async void OnRootLoaded(object sender, RoutedEventArgs e)
     {
-        await Task.Delay(MinimumSplashDuration);
+        await Task.WhenAll(_dashboard.LoadAsync(CancellationToken.None), Task.Delay(MinimumSplashDuration));
         await StartupOverlay.FadeOutAsync();
         RootGrid.Children.Remove(StartupOverlay);
     }

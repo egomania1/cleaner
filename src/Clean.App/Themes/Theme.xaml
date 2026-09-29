@@ -31,6 +31,18 @@
         <Setter Property="Padding" Value="20" />
     </Style>
 
+    <!-- The default track is a 1px line; make it as thick as the usage indicator. -->
+    <x:Double x:Key="ProgressBarTrackHeight">6</x:Double>
+
+    <Style x:Key="UsageBarStyle" TargetType="ProgressBar">
+        <Setter Property="Height" Value="6" />
+        <Setter Property="MinHeight" Value="6" />
+        <Setter Property="Maximum" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+        <Setter Property="Background" Value="{StaticResource CardBorderBrush}" />
+    </Style>
+
     <Style x:Key="PageTitleTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="28" />
         <Setter Property="FontWeight" Value="Bold" />

@@ -4,5 +4,5 @@ namespace Clean.Core.Interfaces;
 
 public interface IDiskService
 {
-    IReadOnlyList<DiskInfo> GetDisks();
+    Task<IReadOnlyList<DiskInfo>> GetDisksAsync(CancellationToken cancellationToken);
 }

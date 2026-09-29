@@ -5,7 +5,8 @@ public sealed record DiskInfo(
     string Label,
     DriveType Type,
     long TotalBytes,
-    long FreeBytes)
+    long FreeBytes,
+    bool IsSystemDrive)
 {
     public long UsedBytes => TotalBytes - FreeBytes;
 
