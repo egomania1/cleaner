@@ -19,6 +19,7 @@ public class ScanResultTests
                 TestItems.Create(sizeBytes: 300, canClean: true),
                 TestItems.Create(sizeBytes: 700, canClean: false),
             ],
+            [],
             TimeSpan.FromSeconds(1));
 
         Assert.Equal(1000, result.TotalBytes);

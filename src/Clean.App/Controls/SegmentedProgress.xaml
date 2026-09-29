@@ -1,0 +1,27 @@
+<UserControl
+    x:Class="Clean.App.Controls.SegmentedProgress"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel Spacing="10">
+        <Grid>
+            <TextBlock
+                FontSize="13"
+                FontWeight="Medium"
+                Foreground="{StaticResource MutedTextBrush}"
+                Text="{x:Bind Label, Mode=OneWay}" />
+            <TextBlock
+                x:Name="PercentText"
+                HorizontalAlignment="Right"
+                FontSize="13"
+                FontWeight="SemiBold"
+                Foreground="{StaticResource PrimaryTextBrush}"
+                Text="0 %" />
+        </Grid>
+
+        <Grid
+            x:Name="SegmentsGrid"
+            Height="12"
+            ColumnSpacing="3" />
+    </StackPanel>
+</UserControl>

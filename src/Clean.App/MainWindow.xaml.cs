@@ -1,3 +1,4 @@
+using Clean.App.Services;
 using Clean.App.ViewModels;
 using Clean.App.Views;
 using Microsoft.UI;
@@ -12,10 +13,15 @@ public sealed partial class MainWindow : Window
 {
     private static readonly TimeSpan MinimumSplashDuration = TimeSpan.FromSeconds(1.2);
 
+    private static readonly Dictionary<string, Type> Pages = new()
+    {
+        ["dashboard"] = typeof(DashboardPage),
+        ["storage"] = typeof(StoragePage),
+    };
+
     private static readonly Dictionary<string, PlaceholderContent> UpcomingPages = new()
     {
         ["cleaner"] = new("Nettoyage", "Les fichiers temporaires et caches nettoyables, avec la raison de chaque proposition."),
-        ["storage"] = new("Stockage", "La répartition de l'espace disque par catégorie : applications, jeux, vidéos, documents…"),
         ["apps"] = new("Applications", "L'espace utilisé par chaque application, séparé entre cache nettoyable et données protégées."),
         ["duplicates"] = new("Doublons", "Les fichiers identiques présents à plusieurs endroits."),
         ["large-files"] = new("Gros fichiers", "Les fichiers les plus volumineux, à trier toi-même."),
@@ -27,11 +33,12 @@ public sealed partial class MainWindow : Window
 
     private readonly DashboardViewModel _dashboard;
 
-    public MainWindow(DashboardViewModel dashboard)
+    public MainWindow(DashboardViewModel dashboard, NavigationService navigation)
     {
         _dashboard = dashboard;
         InitializeComponent();
         ConfigureWindow();
+        navigation.NavigationRequested += SelectPage;
         Navigation.SelectedItem = DashboardItem;
     }
 
@@ -59,15 +66,26 @@ public sealed partial class MainWindow : Window
         RootGrid.Children.Remove(StartupOverlay);
     }
 
+    private void SelectPage(string pageTag)
+    {
+        Navigation.SelectedItem = Navigation.MenuItems
+            .OfType<NavigationViewItem>()
+            .FirstOrDefault(item => item.Tag as string == pageTag);
+    }
+
     private void OnNavigationSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
         var tag = args.IsSettingsSelected ? "settings" : args.SelectedItemContainer?.Tag as string;
-
-        if (tag == "dashboard")
+        if (tag is null)
         {
-            ContentFrame.Navigate(typeof(DashboardPage));
+            return;
         }
-        else if (tag is not null && UpcomingPages.TryGetValue(tag, out var content))
+
+        if (Pages.TryGetValue(tag, out var pageType))
+        {
+            ContentFrame.Navigate(pageType);
+        }
+        else if (UpcomingPages.TryGetValue(tag, out var content))
         {
             ContentFrame.Navigate(typeof(PlaceholderPage), content);
         }

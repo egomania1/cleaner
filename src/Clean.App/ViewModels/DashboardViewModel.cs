@@ -1,15 +1,27 @@
 using System.Collections.ObjectModel;
+using Clean.App.Services;
 using Clean.Core.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 
 namespace Clean.App.ViewModels;
 
-public sealed class DashboardViewModel(IDiskService diskService, ILogger<DashboardViewModel> logger) : ObservableObject
+public sealed class DashboardViewModel(
+    IDiskService diskService,
+    StorageViewModel storage,
+    NavigationService navigation,
+    ILogger<DashboardViewModel> logger) : ObservableObject
 {
     private string? _errorMessage;
 
     public ObservableCollection<DiskItemViewModel> Disks { get; } = [];
+
+    public IAsyncRelayCommand AnalyzeCommand { get; } = new AsyncRelayCommand(async () =>
+    {
+        navigation.NavigateTo("storage");
+        await storage.AnalyzeSystemDiskAsync();
+    });
 
     public string? ErrorMessage
     {

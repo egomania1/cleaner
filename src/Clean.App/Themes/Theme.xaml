@@ -18,6 +18,8 @@
     <SolidColorBrush x:Key="MutedTextBrush" Color="#B5B5B5" />
     <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="#FF141414" />
     <SolidColorBrush x:Key="LoaderStrokeBrush" Color="#F3F4F6" />
+    <SolidColorBrush x:Key="SegmentFilledBrush" Color="#FAFAFA" />
+    <SolidColorBrush x:Key="SegmentEmptyBrush" Color="#1FFFFFFF" />
 
     <SolidColorBrush x:Key="SafeBrush" Color="#34D399" />
     <SolidColorBrush x:Key="CautionBrush" Color="#FBBF24" />

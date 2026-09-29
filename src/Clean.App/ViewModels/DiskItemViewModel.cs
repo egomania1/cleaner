@@ -5,7 +5,11 @@ namespace Clean.App.ViewModels;
 
 public sealed class DiskItemViewModel(DiskInfo disk)
 {
+    public DiskInfo Disk => disk;
+
     public string Name => disk.RootPath.TrimEnd('\\');
+
+    public string DisplayName => $"{Name}  {Label} — {FreeText}";
 
     public string Label => string.IsNullOrWhiteSpace(disk.Label) ? DescribeType(disk.Type) : disk.Label;
 

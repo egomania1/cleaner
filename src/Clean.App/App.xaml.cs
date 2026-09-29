@@ -1,5 +1,7 @@
+using Clean.App.Services;
 using Clean.App.ViewModels;
 using Clean.Core.Interfaces;
+using Clean.Infrastructure.FileSystem;
 using Clean.Infrastructure.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -31,8 +33,11 @@ public partial class App : Application
         services.AddLogging(builder => builder.AddDebug());
 
         services.AddSingleton<IDiskService, DiskService>();
+        services.AddSingleton<IStorageAnalyzer, StorageAnalyzer>();
+        services.AddSingleton<NavigationService>();
 
         services.AddSingleton<DashboardViewModel>();
+        services.AddSingleton<StorageViewModel>();
         services.AddSingleton<MainWindow>();
 
         return services.BuildServiceProvider();

@@ -102,10 +102,10 @@
                     <Button
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
+                        Command="{x:Bind ViewModel.AnalyzeCommand}"
                         Content="Analyser le PC"
-                        IsEnabled="False"
                         Style="{StaticResource LiquidButtonStyle}"
-                        ToolTipService.ToolTip="L'analyse n'est pas encore disponible." />
+                        ToolTipService.ToolTip="Analyse ce qui occupe la place sur le disque système." />
                 </Border>
             </Grid>
         </StackPanel>
