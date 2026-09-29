@@ -36,9 +36,12 @@ public static class LocationGuide
 
         var segments = SegmentsFromDriveRoot(usage.Path);
         var rule = LocationCatalog.Rules.FirstOrDefault(candidate => candidate.Matches(segments));
+        var app = AppGuide.Find(usage.IsDirectory ? usage.Label : Path.GetFileNameWithoutExtension(usage.Label));
+
         if (rule is not null)
         {
-            return WithName(rule.Description, usage.Label);
+            var described = WithName(rule.Description, usage.Label);
+            return app is not null && described.Kind == LocationKind.Applications ? WithApp(described, app) : described;
         }
 
         if (usage.IsDirectory && LocationCatalog.AnywhereByName.TryGetValue(usage.Label, out var byName))
@@ -46,13 +49,46 @@ public static class LocationGuide
             return byName;
         }
 
-        if (!usage.IsDirectory)
+        if (usage.IsDirectory)
         {
-            return FileTypeGuide.Describe(usage.Label) ?? UnknownFile;
+            return app is not null ? WithApp(KnownApplication, app) : UnknownFolder;
         }
 
-        return UnknownFolder;
+        if (app is not null && IsExecutable(usage.Label))
+        {
+            return WithApp(KnownApplication, app) with { Kind = LocationKind.File, Summary = $"Le programme de {app.Name}. {app.WhatItIs}" };
+        }
+
+        return FileTypeGuide.Describe(usage.Label) ?? UnknownFile;
     }
+
+    public static LocationDescription DescribeProgram(ProgramInfo program)
+    {
+        if (AppGuide.Find(program.Name) is { } app)
+        {
+            return WithApp(KnownApplication, app);
+        }
+
+        var publisher = string.IsNullOrWhiteSpace(program.Publisher) ? string.Empty : $", éditée par {program.Publisher}";
+        return KnownApplication with
+        {
+            Summary = $"Le dossier de l'application « {program.Name} »{publisher}.",
+            Advice = "Si tu ne l'utilises plus, désinstalle-la depuis Paramètres › Applications plutôt que de supprimer le dossier : ses réglages et son désinstalleur seraient laissés à moitié.",
+        };
+    }
+
+    private static readonly LocationDescription KnownApplication = new(
+        LocationKind.Applications,
+        "Application",
+        RiskLevel.Caution,
+        string.Empty,
+        string.Empty);
+
+    private static LocationDescription WithApp(LocationDescription description, AppProfile app) =>
+        description with { Summary = $"{app.Name} — {app.WhatItIs}", Advice = app.WhereSpaceGoes };
+
+    private static bool IsExecutable(string fileName) =>
+        string.Equals(Path.GetExtension(fileName), ".exe", StringComparison.OrdinalIgnoreCase);
 
     private static IReadOnlyList<string> SegmentsFromDriveRoot(string path)
     {

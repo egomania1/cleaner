@@ -43,6 +43,14 @@ public class ProgramMatcherTests
     }
 
     [Fact]
+    public void ProgramsAt_IgnoresProgramsRegisteredOnAWholeDrive()
+    {
+        ProgramInfo[] programs = [new("Rockstar Games Launcher", "Rockstar Games", null, null, @"F:\")];
+
+        Assert.Empty(ProgramMatcher.ProgramsAt(programs, @"F:\fiveml"));
+    }
+
+    [Fact]
     public void ProgramsAt_DoesNotConfuseFoldersSharingAPrefix()
     {
         Assert.Empty(ProgramMatcher.ProgramsAt(Programs, @"C:\Program Files (x86)\SteamLibrary"));

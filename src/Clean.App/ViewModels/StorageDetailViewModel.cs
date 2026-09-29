@@ -18,6 +18,9 @@ public sealed class StorageDetailViewModel : ObservableObject
 
     private readonly StorageUsage _usage;
     private readonly DetailNavigation _navigation;
+    private AppProfile? _app;
+    private string _summary;
+    private string _advice;
     private bool _isLoading;
     private string? _loadingMessage;
 
@@ -37,8 +40,9 @@ public sealed class StorageDetailViewModel : ObservableObject
         Kind = description.Kind;
         Verdict = description.Verdict.ToUpper(French);
         Risk = description.Risk;
-        Summary = description.Summary;
-        Advice = description.Advice;
+        _summary = description.Summary;
+        _advice = description.Advice;
+        _app = AppGuide.Find(usage.IsDirectory ? usage.Label : Path.GetFileNameWithoutExtension(usage.Label));
         SizeText = ByteSize.Format(usage.SizeBytes);
         ShareText = analyzedBytes > 0
             ? $"{(usage.SizeBytes * 100.0 / analyzedBytes).ToString("0.#", French)} % de l'espace analysé"
@@ -73,9 +77,17 @@ public sealed class StorageDetailViewModel : ObservableObject
 
     public RiskLevel Risk { get; }
 
-    public string Summary { get; }
+    public string Summary
+    {
+        get => _summary;
+        private set => SetProperty(ref _summary, value);
+    }
 
-    public string Advice { get; }
+    public string Advice
+    {
+        get => _advice;
+        private set => SetProperty(ref _advice, value);
+    }
 
     public string SizeText { get; }
 
@@ -162,7 +174,13 @@ public sealed class StorageDetailViewModel : ObservableObject
     private void ShowFacts(EntryDetails details)
     {
         var now = DateTimeOffset.Now;
+        ApplyProgramKnowledge(details.Programs);
+
         Facts.Add(new DetailFact("Type", DescribeType(details)));
+        if (_app is not null)
+        {
+            Facts.Add(new DetailFact("Catégorie", _app.Category));
+        }
 
         foreach (var fact in DescribePrograms(details.Programs))
         {
@@ -193,6 +211,27 @@ public sealed class StorageDetailViewModel : ObservableObject
         {
             Facts.Add(new DetailFact("Créé le", RelativeDate.Format(created, now)));
         }
+    }
+
+    // The folder name alone is often not enough ("fiveml", "valo"): the application found inside it
+    // (installed program or main executable) gives a far better explanation than "unknown folder".
+    private void ApplyProgramKnowledge(IReadOnlyList<ProgramInfo> programs)
+    {
+        if (_app is not null || programs.Count != 1)
+        {
+            return;
+        }
+
+        var program = programs[0];
+        _app = AppGuide.Find(program.Name);
+        if (_app is null && Kind is not LocationKind.Folder)
+        {
+            return;
+        }
+
+        var description = LocationGuide.DescribeProgram(program);
+        Summary = description.Summary;
+        Advice = description.Advice;
     }
 
     private string DescribeType(EntryDetails details)
