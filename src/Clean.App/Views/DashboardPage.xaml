@@ -1,0 +1,77 @@
+<Page
+    x:Class="Clean.App.Views.DashboardPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Clean.App.Controls">
+
+    <ScrollViewer>
+        <StackPanel
+            MaxWidth="1100"
+            Padding="32,8,32,32"
+            Spacing="16">
+
+            <StackPanel Spacing="4">
+                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Tableau de bord" />
+                <TextBlock Style="{StaticResource MutedTextStyle}" Text="Comprends ton stockage. Nettoie ce qui compte." />
+            </StackPanel>
+
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="10">
+                    <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="STOCKAGE" />
+                    <Grid>
+                        <TextBlock Style="{StaticResource CardValueTextStyle}" Text="—" />
+                        <TextBlock
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Style="{StaticResource MutedTextStyle}"
+                            Text="Disques non chargés" />
+                    </Grid>
+                    <ProgressBar
+                        Height="8"
+                        CornerRadius="4"
+                        Maximum="1"
+                        Value="0" />
+                </StackPanel>
+            </Border>
+
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <controls:StatCard Grid.Column="0" Title="NETTOYABLE" Value="—" Caption="Pas encore analysé" />
+                <controls:StatCard Grid.Column="1" Title="GROS FICHIERS" Value="—" Caption="Pas encore analysé" />
+                <controls:StatCard Grid.Column="2" Title="DOUBLONS" Value="—" Caption="Pas encore analysé" />
+                <controls:StatCard Grid.Column="3" Title="APPLICATIONS" Value="—" Caption="Pas encore analysé" />
+                <controls:StatCard Grid.Column="4" Title="DÉVELOPPEUR" Value="—" Caption="Pas encore analysé" />
+            </Grid>
+
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="APERÇU DU STOCKAGE" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="L'évolution de ton stockage apparaîtra ici après plusieurs analyses." />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                    <Button
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Content="Analyser le PC"
+                        IsEnabled="False"
+                        Style="{StaticResource LiquidButtonStyle}"
+                        ToolTipService.ToolTip="L'analyse n'est pas encore disponible." />
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
