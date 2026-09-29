@@ -36,6 +36,7 @@ public sealed class StorageViewModel : ObservableObject
     private string? _statusMessage;
     private IReadOnlyList<StorageUsage> _buckets = [];
     private IReadOnlyList<StorageBucketRow> _bucketRows = [];
+    private string _resultDiskName = string.Empty;
 
     public StorageViewModel(IDiskService diskService, IStorageAnalyzer storageAnalyzer, ILogger<StorageViewModel> logger)
     {
@@ -134,7 +135,7 @@ public sealed class StorageViewModel : ObservableObject
         private set => SetProperty(ref _bucketRows, value);
     }
 
-    public string ResultSummary => $"{FilesScannedText} fichiers analysés en {ElapsedText}";
+    public string ResultSummary => $"{_resultDiskName} — {FilesScannedText} fichiers analysés en {ElapsedText}";
 
     private DiskItemViewModel? SelectedDisk =>
         SelectedDiskIndex >= 0 && SelectedDiskIndex < Disks.Count ? Disks[SelectedDiskIndex] : null;
@@ -193,7 +194,7 @@ public sealed class StorageViewModel : ObservableObject
         try
         {
             var usages = await _storageAnalyzer.AnalyzeAsync(disk.RootPath, progress, cancellationToken);
-            ShowResult(usages);
+            ShowResult(usages, selected.Name);
         }
         catch (OperationCanceledException)
         {
@@ -235,8 +236,9 @@ public sealed class StorageViewModel : ObservableObject
         ProgressPercent = disk.UsedBytes > 0 ? Math.Min(MaxRunningPercent, report.BytesAnalyzed * 100.0 / disk.UsedBytes) : 0;
     }
 
-    private void ShowResult(IReadOnlyList<StorageUsage> usages)
+    private void ShowResult(IReadOnlyList<StorageUsage> usages, string diskName)
     {
+        _resultDiskName = diskName;
         Buckets = StorageBuckets.TopWithRemainder(usages, ChartSliceCount);
         BucketRows = Buckets.Select(bucket => new StorageBucketRow(bucket.Label, ByteSize.Format(bucket.SizeBytes))).ToList();
         ProgressPercent = 100;

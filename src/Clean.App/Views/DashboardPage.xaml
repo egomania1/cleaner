@@ -5,7 +5,7 @@
     xmlns:controls="using:Clean.App.Controls"
     xmlns:viewmodels="using:Clean.App.ViewModels">
 
-    <ScrollViewer>
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled">
         <StackPanel
             MaxWidth="1100"
             Padding="32,8,32,32"
