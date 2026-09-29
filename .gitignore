@@ -1,7 +1,27 @@
-node_modules
-dist
-dist-electron
-release
-*.tsbuildinfo
-*.lnk
-*.zip
+# .NET build output
+bin/
+obj/
+*.user
+.vs/
+TestResults/
+publish/
+
+# Local runtime data
+logs/
+cache/
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets
+*.env
+appsettings.*.local.json
+
+# Leftover build output of the former Electron version
+node_modules/
+dist/
+dist-electron/
+release/
+Clean-win32-x64.zip
+Clean.lnk
+tsconfig.tsbuildinfo

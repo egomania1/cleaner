@@ -1,38 +1,39 @@
 # Clean
 
-A Windows desktop app that scans a drive, groups what it finds into safe-to-delete vs. review-first categories, and clears what you select.
+Understand your storage. Clean what matters.
 
-![Clean preview](docs/preview.png)
+Windows desktop app that analyzes what fills a drive, explains it, and only cleans what has been proven safe.
 
-## Features
+## Stack
 
-- Scans user/system temp folders, Windows Error Reporting, browser caches (Chrome, Edge, Brave, Firefox), GPU shader caches (NVIDIA, AMD), leftover old versions of auto-updating apps (Discord, Slack), Spotify's local cache, and the Recycle Bin
-- Flags each item as **SUR** (safe) or **A VERIFIER** (review first) so you're never guessing what a cleanup will affect
-- Drive overview with a size-proportional radial chart
-- Dark, translucent (Windows 11 acrylic) interface
+- C# / .NET 8
+- WinUI 3 (Windows App SDK 2.5, unpackaged)
+- xUnit
 
-## Tech stack
+## Solution layout
 
-- Electron + Vite
-- React 19 + TypeScript
-- Tailwind CSS v4, shadcn-style component structure
-
-## Getting started
-
-```bash
-npm install
-npm run dev       # start in development mode
+```
+Clean.sln
+src/
+  Clean.App             WinUI 3 user interface
+  Clean.Core            Models, interfaces and business rules, no Windows dependency
+  Clean.Infrastructure  Windows and file system access
+tests/
+  Clean.Tests           Unit tests
 ```
 
-## Building
+## Build
 
-```bash
-npm run build      # type-check + build the renderer and main process
-npm run package    # produce a standalone Windows build in release/
+Requires the .NET 8 SDK and the Windows App Runtime 2.5 (x64).
+
+```
+dotnet restore
+dotnet build
+dotnet test
 ```
 
-## Security
+Run the app:
 
-- The renderer never receives raw filesystem paths to delete — it can only reference items by key from the app's own last scan, which the main process resolves and validates before touching disk
-- Drive letters are validated before being used in any filesystem or shell command
-- `contextIsolation`, `sandbox`, and disabled `nodeIntegration` are set explicitly; window navigation and new-window creation are blocked
+```
+dotnet run --project src/Clean.App
+```
