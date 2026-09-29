@@ -33,7 +33,7 @@ public sealed class StorageDetailViewModel : ObservableObject
         Risk = description.Risk;
         Summary = description.Summary;
         Advice = description.Advice;
-        Glyph = GlyphFor(description.Kind);
+        Kind = description.Kind;
         SizeText = ByteSize.Format(usage.SizeBytes);
         ShareText = analyzedBytes > 0
             ? $"{(usage.SizeBytes * 100.0 / analyzedBytes).ToString("0.#", French)} % de l'espace analysé"
@@ -64,7 +64,7 @@ public sealed class StorageDetailViewModel : ObservableObject
 
     public string Advice { get; }
 
-    public string Glyph { get; }
+    public LocationKind Kind { get; }
 
     public string SizeText { get; }
 
@@ -144,17 +144,4 @@ public sealed class StorageDetailViewModel : ObservableObject
             Children.Add(new StorageChildRow(child.Label, ByteSize.Format(child.SizeBytes), ratio));
         }
     }
-
-    // Segoe Fluent Icons glyphs.
-    private static string GlyphFor(LocationKind kind) => kind switch
-    {
-        LocationKind.System => "",
-        LocationKind.Applications => "",
-        LocationKind.UserData => "",
-        LocationKind.RecycleBin => "",
-        LocationKind.SystemFile => "",
-        LocationKind.Group => "",
-        LocationKind.File => "",
-        _ => "",
-    };
 }

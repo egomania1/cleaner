@@ -24,34 +24,12 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Grid
-                x:Name="VisualPanel"
-                MinHeight="240"
-                Background="#0C0C0E"
-                CornerRadius="11,0,0,11">
+            <Grid x:Name="VisualPanel" MinHeight="240">
+                <Border x:Name="GradientBase" CornerRadius="11,0,0,11" />
                 <Border
-                    x:Name="VisualTint"
-                    Background="{x:Bind Detail.Risk, Mode=OneWay, Converter={StaticResource RiskBrush}}"
+                    x:Name="GradientGlow"
                     CornerRadius="11,0,0,11"
-                    Opacity="0.14" />
-                <StackPanel
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Spacing="10">
-                    <FontIcon
-                        FontSize="64"
-                        Foreground="{x:Bind Detail.Risk, Mode=OneWay, Converter={StaticResource RiskBrush}}"
-                        Glyph="{x:Bind Detail.Glyph, Mode=OneWay}" />
-                    <TextBlock
-                        HorizontalAlignment="Center"
-                        FontSize="26"
-                        FontWeight="Bold"
-                        Text="{x:Bind Detail.SizeText, Mode=OneWay}" />
-                    <TextBlock
-                        HorizontalAlignment="Center"
-                        Style="{StaticResource MutedTextStyle}"
-                        Text="{x:Bind Detail.ShareText, Mode=OneWay}" />
-                </StackPanel>
+                    Opacity="0.8" />
             </Grid>
 
             <StackPanel
@@ -84,6 +62,16 @@
                         FontWeight="Bold"
                         Text="{x:Bind Detail.Name, Mode=OneWay}"
                         TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock
+                            FontSize="18"
+                            FontWeight="SemiBold"
+                            Text="{x:Bind Detail.SizeText, Mode=OneWay}" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Style="{StaticResource MutedTextStyle}"
+                            Text="{x:Bind Detail.ShareText, Mode=OneWay}" />
+                    </StackPanel>
                     <TextBlock
                         FontSize="14"
                         Foreground="{StaticResource MutedTextBrush}"
@@ -175,9 +163,9 @@
                             <Setter Target="ContentColumn.Width" Value="0" />
                             <Setter Target="ContentPanel.(Grid.Column)" Value="0" />
                             <Setter Target="ContentPanel.(Grid.Row)" Value="1" />
-                            <Setter Target="VisualPanel.MinHeight" Value="180" />
-                            <Setter Target="VisualPanel.CornerRadius" Value="11,11,0,0" />
-                            <Setter Target="VisualTint.CornerRadius" Value="11,11,0,0" />
+                            <Setter Target="VisualPanel.MinHeight" Value="120" />
+                            <Setter Target="GradientBase.CornerRadius" Value="11,11,0,0" />
+                            <Setter Target="GradientGlow.CornerRadius" Value="11,11,0,0" />
                         </VisualState.Setters>
                     </VisualState>
                 </VisualStateGroup>
