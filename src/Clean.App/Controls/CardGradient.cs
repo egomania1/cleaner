@@ -5,8 +5,11 @@ using Windows.UI;
 
 namespace Clean.App.Controls;
 
-public static class CardGradient
+public sealed class CardGradient
 {
+    private const double FullTurn = Math.PI * 2;
+    private const double BaseTurnSeconds = 24;
+
     private static readonly Dictionary<LocationKind, (Color Dark, Color Light)> Palettes = new()
     {
         [LocationKind.System] = (Rgb(0x3B, 0x0A, 0x1E), Rgb(0xB9, 0x1C, 0x1C)),
@@ -19,39 +22,50 @@ public static class CardGradient
         [LocationKind.File] = (Rgb(0x16, 0x4E, 0x63), Rgb(0x22, 0xD3, 0xEE)),
     };
 
-    public static Brush CreateBase(LocationKind kind, string name)
+    private readonly LinearGradientBrush _base = new();
+    private readonly RadialGradientBrush _glow = new() { RadiusX = 0.7, RadiusY = 0.7 };
+    private readonly double _anglePhase;
+    private readonly double _glowPhaseX;
+    private readonly double _glowPhaseY;
+
+    public CardGradient(LocationKind kind, string name)
     {
         var (dark, light) = Palettes[kind];
-        var angle = Fraction(name, salt: 1) * Math.PI * 2;
-        var direction = new Point(Math.Cos(angle) / 2, Math.Sin(angle) / 2);
 
-        var brush = new LinearGradientBrush
-        {
-            StartPoint = new Point(0.5 - direction.X, 0.5 - direction.Y),
-            EndPoint = new Point(0.5 + direction.X, 0.5 + direction.Y),
-        };
-        brush.GradientStops.Add(new GradientStop { Color = dark, Offset = 0 });
-        brush.GradientStops.Add(new GradientStop { Color = Mix(dark, light, 0.55), Offset = 0.6 });
-        brush.GradientStops.Add(new GradientStop { Color = light, Offset = 1 });
-        return brush;
+        _base.GradientStops.Add(new GradientStop { Color = dark, Offset = 0 });
+        _base.GradientStops.Add(new GradientStop { Color = Mix(dark, light, 0.55), Offset = 0.6 });
+        _base.GradientStops.Add(new GradientStop { Color = light, Offset = 1 });
+
+        _glow.GradientStops.Add(new GradientStop { Color = Color.FromArgb(0xB0, 0xFF, 0xFF, 0xFF), Offset = 0 });
+        _glow.GradientStops.Add(new GradientStop { Color = Color.FromArgb(0x55, light.R, light.G, light.B), Offset = 0.35 });
+        _glow.GradientStops.Add(new GradientStop { Color = Color.FromArgb(0, light.R, light.G, light.B), Offset = 1 });
+
+        _anglePhase = Fraction(name, salt: 1) * FullTurn;
+        _glowPhaseX = Fraction(name, salt: 2) * FullTurn;
+        _glowPhaseY = Fraction(name, salt: 3) * FullTurn;
+
+        Animate(TimeSpan.Zero);
     }
 
-    public static Brush CreateGlow(LocationKind kind, string name)
-    {
-        var (_, light) = Palettes[kind];
-        var center = new Point(0.2 + Fraction(name, salt: 2) * 0.6, 0.2 + Fraction(name, salt: 3) * 0.6);
+    public Brush Base => _base;
 
-        var brush = new RadialGradientBrush
-        {
-            Center = center,
-            GradientOrigin = center,
-            RadiusX = 0.7,
-            RadiusY = 0.7,
-        };
-        brush.GradientStops.Add(new GradientStop { Color = Color.FromArgb(0xB0, 0xFF, 0xFF, 0xFF), Offset = 0 });
-        brush.GradientStops.Add(new GradientStop { Color = Color.FromArgb(0x55, light.R, light.G, light.B), Offset = 0.35 });
-        brush.GradientStops.Add(new GradientStop { Color = Color.FromArgb(0, light.R, light.G, light.B), Offset = 1 });
-        return brush;
+    public Brush Glow => _glow;
+
+    public void Animate(TimeSpan elapsed)
+    {
+        var seconds = elapsed.TotalSeconds;
+
+        var angle = _anglePhase + seconds * FullTurn / BaseTurnSeconds;
+        var direction = new Point(Math.Cos(angle) / 2, Math.Sin(angle) / 2);
+        _base.StartPoint = new Point(0.5 - direction.X, 0.5 - direction.Y);
+        _base.EndPoint = new Point(0.5 + direction.X, 0.5 + direction.Y);
+
+        // Two unrelated speeds on each axis make the glow wander without visibly looping.
+        var center = new Point(
+            0.5 + 0.3 * Math.Sin(seconds * 0.45 + _glowPhaseX),
+            0.5 + 0.32 * Math.Sin(seconds * 0.31 + _glowPhaseY));
+        _glow.Center = center;
+        _glow.GradientOrigin = center;
     }
 
     // string.GetHashCode changes on every launch; a small FNV-1a hash keeps each name's gradient stable.

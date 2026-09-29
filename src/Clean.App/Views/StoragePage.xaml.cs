@@ -26,9 +26,9 @@ public sealed partial class StoragePage : Page
 
     private void OnBucketRowClicked(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: StorageBucketRow row })
+        if (sender is FrameworkElement { Tag: StorageUsage bucket })
         {
-            ShowDetail(row.Usage);
+            ShowDetail(bucket);
         }
     }
 

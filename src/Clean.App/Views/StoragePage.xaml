@@ -144,7 +144,8 @@
                                 <Button
                                     AutomationProperties.Name="{x:Bind Label}"
                                     Click="OnBucketRowClicked"
-                                    Style="{StaticResource CardRowButtonStyle}">
+                                    Style="{StaticResource CardRowButtonStyle}"
+                                    Tag="{x:Bind Usage}">
                                     <Grid>
                                         <TextBlock Text="{x:Bind Label}" TextTrimming="CharacterEllipsis" />
                                         <TextBlock
