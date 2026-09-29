@@ -6,108 +6,114 @@
     xmlns:viewmodels="using:Clean.App.ViewModels">
 
     <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled">
-        <StackPanel
-            MaxWidth="1100"
-            Padding="32,8,32,32"
-            Spacing="16">
+        <!-- The content column grows up to 1100px; the side columns share what is left, which keeps it centered. -->
+        <Grid Padding="32,8,32,32">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="100*" MaxWidth="1100" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-            <StackPanel Spacing="4">
-                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Tableau de bord" />
-                <TextBlock Style="{StaticResource MutedTextStyle}" Text="Comprends ton stockage. Nettoie ce qui compte." />
-            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="16">
 
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel Spacing="16">
-                    <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="STOCKAGE" />
-
-                    <TextBlock
-                        Foreground="{StaticResource CautionBrush}"
-                        Style="{StaticResource MutedTextStyle}"
-                        Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
-                        Visibility="{x:Bind ViewModel.HasError, Mode=OneWay}" />
-
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Disks}">
-                        <ItemsRepeater.Layout>
-                            <StackLayout Spacing="20" />
-                        </ItemsRepeater.Layout>
-                        <ItemsRepeater.ItemTemplate>
-                            <DataTemplate x:DataType="viewmodels:DiskItemViewModel">
-                                <StackPanel Spacing="10">
-                                    <Grid>
-                                        <StackPanel Orientation="Horizontal" Spacing="10">
-                                            <TextBlock Style="{StaticResource CardValueTextStyle}" Text="{x:Bind Name}" />
-                                            <TextBlock
-                                                VerticalAlignment="Center"
-                                                Style="{StaticResource MutedTextStyle}"
-                                                Text="{x:Bind Label}" />
-                                            <Border
-                                                Padding="8,2"
-                                                VerticalAlignment="Center"
-                                                Background="{StaticResource CardBorderBrush}"
-                                                CornerRadius="999"
-                                                Visibility="{x:Bind IsSystemDrive}">
-                                                <TextBlock FontSize="11" Text="Système" />
-                                            </Border>
-                                        </StackPanel>
-
-                                        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
-                                            <TextBlock
-                                                HorizontalAlignment="Right"
-                                                FontWeight="SemiBold"
-                                                Text="{x:Bind UsageText}" />
-                                            <TextBlock
-                                                HorizontalAlignment="Right"
-                                                Style="{StaticResource MutedTextStyle}"
-                                                Text="{x:Bind FreeText}" />
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <ProgressBar Style="{StaticResource UsageBarStyle}" Value="{x:Bind UsedRatio}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsRepeater.ItemTemplate>
-                    </ItemsRepeater>
+                <StackPanel Spacing="4">
+                    <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Tableau de bord" />
+                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Comprends ton stockage. Nettoie ce qui compte." />
                 </StackPanel>
-            </Border>
 
-            <Grid ColumnSpacing="12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                    <ColumnDefinition />
-                </Grid.ColumnDefinitions>
-                <controls:StatCard Grid.Column="0" Title="NETTOYABLE" Value="—" Caption="Pas encore analysé" />
-                <controls:StatCard Grid.Column="1" Title="GROS FICHIERS" Value="—" Caption="Pas encore analysé" />
-                <controls:StatCard Grid.Column="2" Title="DOUBLONS" Value="—" Caption="Pas encore analysé" />
-                <controls:StatCard Grid.Column="3" Title="APPLICATIONS" Value="—" Caption="Pas encore analysé" />
-                <controls:StatCard Grid.Column="4" Title="DÉVELOPPEUR" Value="—" Caption="Pas encore analysé" />
-            </Grid>
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="16">
+                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="STOCKAGE" />
 
-            <Grid ColumnSpacing="12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Foreground="{StaticResource CautionBrush}"
+                            Style="{StaticResource MutedTextStyle}"
+                            Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.HasError, Mode=OneWay}" />
 
-                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
-                    <StackPanel Spacing="8">
-                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="APERÇU DU STOCKAGE" />
-                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="L'évolution de ton stockage apparaîtra ici après plusieurs analyses." />
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Disks}">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Spacing="20" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodels:DiskItemViewModel">
+                                    <StackPanel Spacing="10">
+                                        <Grid>
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Style="{StaticResource CardValueTextStyle}" Text="{x:Bind Name}" />
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    Style="{StaticResource MutedTextStyle}"
+                                                    Text="{x:Bind Label}" />
+                                                <Border
+                                                    Padding="8,2"
+                                                    VerticalAlignment="Center"
+                                                    Background="{StaticResource CardBorderBrush}"
+                                                    CornerRadius="999"
+                                                    Visibility="{x:Bind IsSystemDrive}">
+                                                    <TextBlock FontSize="11" Text="Système" />
+                                                </Border>
+                                            </StackPanel>
+
+                                            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                <TextBlock
+                                                    HorizontalAlignment="Right"
+                                                    FontWeight="SemiBold"
+                                                    Text="{x:Bind UsageText}" />
+                                                <TextBlock
+                                                    HorizontalAlignment="Right"
+                                                    Style="{StaticResource MutedTextStyle}"
+                                                    Text="{x:Bind FreeText}" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <ProgressBar Style="{StaticResource UsageBarStyle}" Value="{x:Bind UsedRatio}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
-                    <Button
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Command="{x:Bind ViewModel.AnalyzeCommand}"
-                        Content="Analyser le PC"
-                        Style="{StaticResource LiquidButtonStyle}"
-                        ToolTipService.ToolTip="Analyse ce qui occupe la place sur le disque système." />
-                </Border>
-            </Grid>
-        </StackPanel>
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <controls:StatCard Grid.Column="0" Title="NETTOYABLE" Value="—" Caption="Pas encore analysé" />
+                    <controls:StatCard Grid.Column="1" Title="GROS FICHIERS" Value="—" Caption="Pas encore analysé" />
+                    <controls:StatCard Grid.Column="2" Title="DOUBLONS" Value="—" Caption="Pas encore analysé" />
+                    <controls:StatCard Grid.Column="3" Title="APPLICATIONS" Value="—" Caption="Pas encore analysé" />
+                    <controls:StatCard Grid.Column="4" Title="DÉVELOPPEUR" Value="—" Caption="Pas encore analysé" />
+                </Grid>
+
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="APERÇU DU STOCKAGE" />
+                            <TextBlock Style="{StaticResource MutedTextStyle}" Text="L'évolution de ton stockage apparaîtra ici après plusieurs analyses." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                        <Button
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Command="{x:Bind ViewModel.AnalyzeCommand}"
+                            Content="Analyser le PC"
+                            Style="{StaticResource LiquidButtonStyle}"
+                            ToolTipService.ToolTip="Analyse ce qui occupe la place sur le disque système." />
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </Grid>
     </ScrollViewer>
 </Page>
