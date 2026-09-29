@@ -6,11 +6,11 @@
     xmlns:viewmodels="using:Clean.App.ViewModels">
 
     <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled">
-        <!-- The content column grows up to 1100px; the side columns share what is left, which keeps it centered. -->
+        <!-- The content column grows up to 1600px; the side columns share what is left, which keeps it centered. -->
         <Grid Padding="32,8,32,32">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="100*" MaxWidth="1100" />
+                <ColumnDefinition Width="100*" MaxWidth="1600" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 

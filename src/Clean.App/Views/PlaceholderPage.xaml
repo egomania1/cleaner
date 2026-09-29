@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <StackPanel
-        MaxWidth="1100"
+        MaxWidth="1600"
         Padding="32,8,32,32"
         Spacing="16">
         <TextBlock x:Name="TitleText" Style="{StaticResource PageTitleTextStyle}" />
