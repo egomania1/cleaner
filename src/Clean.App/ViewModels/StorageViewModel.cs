@@ -23,6 +23,7 @@ public sealed class StorageViewModel : ObservableObject
 
     private readonly IDiskService _diskService;
     private readonly IStorageAnalyzer _storageAnalyzer;
+    private readonly IFileExplorer _fileExplorer;
     private readonly ILogger<StorageViewModel> _logger;
 
     private StorageViewState _state = StorageViewState.Idle;
@@ -37,11 +38,20 @@ public sealed class StorageViewModel : ObservableObject
     private IReadOnlyList<StorageUsage> _buckets = [];
     private IReadOnlyList<StorageBucketRow> _bucketRows = [];
     private string _resultDiskName = string.Empty;
+    private IReadOnlyList<StorageUsage> _usages = [];
+    private StorageUsage? _selectedBucket;
+    private StorageDetailViewModel? _selectedDetail;
+    private CancellationTokenSource? _detailCancellation;
 
-    public StorageViewModel(IDiskService diskService, IStorageAnalyzer storageAnalyzer, ILogger<StorageViewModel> logger)
+    public StorageViewModel(
+        IDiskService diskService,
+        IStorageAnalyzer storageAnalyzer,
+        IFileExplorer fileExplorer,
+        ILogger<StorageViewModel> logger)
     {
         _diskService = diskService;
         _storageAnalyzer = storageAnalyzer;
+        _fileExplorer = fileExplorer;
         _logger = logger;
         AnalyzeCommand = new AsyncRelayCommand(AnalyzeAsync, () => SelectedDisk is not null);
         CancelCommand = AnalyzeCommand.CreateCancelCommand();
@@ -137,6 +147,50 @@ public sealed class StorageViewModel : ObservableObject
 
     public string ResultSummary => $"{_resultDiskName} — {FilesScannedText} fichiers analysés en {ElapsedText}";
 
+    public StorageUsage? SelectedBucket
+    {
+        get => _selectedBucket;
+        private set => SetProperty(ref _selectedBucket, value);
+    }
+
+    public StorageDetailViewModel? SelectedDetail
+    {
+        get => _selectedDetail;
+        private set
+        {
+            if (SetProperty(ref _selectedDetail, value))
+            {
+                OnPropertyChanged(nameof(HasDetail));
+                OnPropertyChanged(nameof(HasNoDetail));
+            }
+        }
+    }
+
+    public bool HasDetail => SelectedDetail is not null;
+
+    public bool HasNoDetail => SelectedDetail is null;
+
+    public void SelectBucket(StorageUsage bucket)
+    {
+        _detailCancellation?.Cancel();
+        _detailCancellation = new CancellationTokenSource();
+
+        var groupedItems = bucket.Path is null ? StorageBuckets.Remainder(_usages, ChartSliceCount) : [];
+        var analyzedBytes = _usages.Sum(usage => usage.SizeBytes);
+
+        SelectedBucket = bucket;
+        SelectedDetail = new StorageDetailViewModel(bucket, analyzedBytes, groupedItems, _fileExplorer, CloseDetail);
+        _ = SelectedDetail.LoadChildrenAsync(_storageAnalyzer, _detailCancellation.Token);
+    }
+
+    public void CloseDetail()
+    {
+        _detailCancellation?.Cancel();
+        _detailCancellation = null;
+        SelectedBucket = null;
+        SelectedDetail = null;
+    }
+
     private DiskItemViewModel? SelectedDisk =>
         SelectedDiskIndex >= 0 && SelectedDiskIndex < Disks.Count ? Disks[SelectedDiskIndex] : null;
 
@@ -211,6 +265,7 @@ public sealed class StorageViewModel : ObservableObject
 
     private void StartScan(string diskName)
     {
+        CloseDetail();
         StatusMessage = null;
         ScanTitle = $"Analyse de {diskName} en cours…";
         ProgressPercent = 0;
@@ -239,8 +294,9 @@ public sealed class StorageViewModel : ObservableObject
     private void ShowResult(IReadOnlyList<StorageUsage> usages, string diskName)
     {
         _resultDiskName = diskName;
+        _usages = usages;
         Buckets = StorageBuckets.TopWithRemainder(usages, ChartSliceCount);
-        BucketRows = Buckets.Select(bucket => new StorageBucketRow(bucket.Label, ByteSize.Format(bucket.SizeBytes))).ToList();
+        BucketRows = Buckets.Select(bucket => new StorageBucketRow(bucket, bucket.Label, ByteSize.Format(bucket.SizeBytes))).ToList();
         ProgressPercent = 100;
         SetState(StorageViewState.Completed);
         OnPropertyChanged(nameof(ResultSummary));

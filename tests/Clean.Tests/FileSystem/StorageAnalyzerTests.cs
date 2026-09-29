@@ -25,6 +25,20 @@ public sealed class StorageAnalyzerTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyzeAsync_KeepsThePathOfEachEntry()
+    {
+        _disk.CreateFile(@"Games\game.bin", 100);
+        _disk.CreateFile("notes.txt", 10);
+
+        var usages = await _analyzer.AnalyzeAsync(_disk.RootPath, null, CancellationToken.None);
+
+        var games = Assert.Single(usages, usage => usage.Label == "Games");
+        Assert.Equal(Path.Combine(_disk.RootPath, "Games"), games.Path);
+        Assert.True(games.IsDirectory);
+        Assert.False(Assert.Single(usages, usage => usage.Label == "notes.txt").IsDirectory);
+    }
+
+    [Fact]
     public async Task AnalyzeAsync_NeverFollowsJunctions()
     {
         var outside = new TestDirectory();

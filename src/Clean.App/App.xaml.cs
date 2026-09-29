@@ -34,6 +34,7 @@ public partial class App : Application
 
         services.AddSingleton<IDiskService, DiskService>();
         services.AddSingleton<IStorageAnalyzer, StorageAnalyzer>();
+        services.AddSingleton<IFileExplorer, FileExplorer>();
         services.AddSingleton<NavigationService>();
 
         services.AddSingleton<DashboardViewModel>();

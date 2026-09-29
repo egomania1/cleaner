@@ -1,6 +1,7 @@
 using Clean.Core.Formatting;
 using Clean.Core.Models;
 using Microsoft.UI;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -14,17 +15,24 @@ public sealed partial class PolarChart : UserControl
 {
     private const int ArcSteps = 8;
     private const int MaxLabelLength = 22;
+    private const double DimmedOpacity = 0.4;
 
     private static readonly Color LowColor = Color.FromArgb(255, 0x10, 0x42, 0x81);
     private static readonly Color HighColor = Color.FromArgb(255, 0x9E, 0xC5, 0xF4);
     private static readonly SolidColorBrush GridBrush = new(Color.FromArgb(255, 0x2C, 0x2C, 0x2A));
     private static readonly SolidColorBrush LabelBrush = new(Colors.White);
     private static readonly SolidColorBrush MutedBrush = new(Color.FromArgb(255, 0x89, 0x87, 0x81));
+    private static readonly SolidColorBrush HitBrush = new(Colors.Transparent);
 
     public static readonly DependencyProperty BucketsProperty =
         DependencyProperty.Register(nameof(Buckets), typeof(object), typeof(PolarChart), new PropertyMetadata(null, OnBucketsChanged));
 
+    public static readonly DependencyProperty SelectedBucketProperty =
+        DependencyProperty.Register(nameof(SelectedBucket), typeof(object), typeof(PolarChart), new PropertyMetadata(null, OnSelectedBucketChanged));
+
     private readonly Canvas _canvas = new();
+    private readonly List<Microsoft.UI.Xaml.Shapes.Path> _wedges = [];
+    private int? _hoveredIndex;
 
     public PolarChart()
     {
@@ -32,18 +40,31 @@ public sealed partial class PolarChart : UserControl
         SizeChanged += (_, _) => Redraw();
     }
 
+    public event EventHandler<StorageUsage>? BucketSelected;
+
     public IReadOnlyList<StorageUsage>? Buckets
     {
         get => (IReadOnlyList<StorageUsage>?)GetValue(BucketsProperty);
         set => SetValue(BucketsProperty, value);
     }
 
+    public StorageUsage? SelectedBucket
+    {
+        get => (StorageUsage?)GetValue(SelectedBucketProperty);
+        set => SetValue(SelectedBucketProperty, value);
+    }
+
     private static void OnBucketsChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e) =>
         ((PolarChart)sender).Redraw();
+
+    private static void OnSelectedBucketChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e) =>
+        ((PolarChart)sender).UpdateHighlight();
 
     private void Redraw()
     {
         _canvas.Children.Clear();
+        _wedges.Clear();
+        _hoveredIndex = null;
 
         var buckets = Buckets;
         var width = ActualWidth;
@@ -69,12 +90,68 @@ public sealed partial class PolarChart : UserControl
             var ratio = largestSize > 0 ? (double)bucket.SizeBytes / largestSize : 0;
             var radius = minRadius + (maxRadius - minRadius) * Math.Sqrt(ratio);
 
-            DrawWedge(center, radius, startDegrees + gapDegrees / 2, startDegrees + stepDegrees - gapDegrees / 2, Blend(ratio));
+            var wedge = CreateSector(center, radius, startDegrees + gapDegrees / 2, startDegrees + stepDegrees - gapDegrees / 2);
+            wedge.Fill = new SolidColorBrush(Blend(ratio));
+            _canvas.Children.Add(wedge);
+            _wedges.Add(wedge);
+
             DrawSpoke(center, maxRadius, startDegrees);
-            DrawLabel(center, maxRadius + 24, startDegrees + stepDegrees / 2, bucket);
+            var label = DrawLabel(center, maxRadius + 24, startDegrees + stepDegrees / 2, bucket);
+
+            // The whole slice, up to the outer circle, reacts to the mouse so that small entries stay easy to click.
+            var hitArea = CreateSector(center, maxRadius, startDegrees, startDegrees + stepDegrees);
+            hitArea.Fill = HitBrush;
+            _canvas.Children.Add(hitArea);
+            MakeInteractive(hitArea, index, bucket);
+            MakeInteractive(label, index, bucket);
         }
 
         DrawLegend(height);
+        UpdateHighlight();
+    }
+
+    private void MakeInteractive(UIElement element, int index, StorageUsage bucket)
+    {
+        element.PointerEntered += (_, _) => SetHovered(index);
+        element.PointerExited += (_, _) => SetHovered(null);
+        element.Tapped += (_, _) => BucketSelected?.Invoke(this, bucket);
+    }
+
+    private void SetHovered(int? index)
+    {
+        _hoveredIndex = index;
+        ProtectedCursor = InputSystemCursor.Create(index is null ? InputSystemCursorShape.Arrow : InputSystemCursorShape.Hand);
+        UpdateHighlight();
+    }
+
+    private void UpdateHighlight()
+    {
+        var buckets = Buckets;
+        var selectedIndex = buckets is null || SelectedBucket is null ? -1 : IndexOf(buckets, SelectedBucket);
+        var hasFocus = selectedIndex >= 0 || _hoveredIndex is not null;
+
+        for (var index = 0; index < _wedges.Count; index++)
+        {
+            var isSelected = index == selectedIndex;
+            var isHovered = index == _hoveredIndex;
+
+            _wedges[index].Opacity = !hasFocus || isSelected || isHovered ? 1 : DimmedOpacity;
+            _wedges[index].Stroke = isSelected ? LabelBrush : null;
+            _wedges[index].StrokeThickness = isSelected ? 2 : 0;
+        }
+    }
+
+    private static int IndexOf(IReadOnlyList<StorageUsage> buckets, StorageUsage bucket)
+    {
+        for (var index = 0; index < buckets.Count; index++)
+        {
+            if (buckets[index] == bucket)
+            {
+                return index;
+            }
+        }
+
+        return -1;
     }
 
     private void DrawGridCircles(Point center, double maxRadius)
@@ -87,7 +164,7 @@ public sealed partial class PolarChart : UserControl
         }
     }
 
-    private void DrawWedge(Point center, double radius, double startDegrees, double endDegrees, Color color)
+    private static Microsoft.UI.Xaml.Shapes.Path CreateSector(Point center, double radius, double startDegrees, double endDegrees)
     {
         var figure = new PathFigure { StartPoint = center, IsClosed = true, IsFilled = true };
         for (var step = 0; step <= ArcSteps; step++)
@@ -98,7 +175,7 @@ public sealed partial class PolarChart : UserControl
 
         var geometry = new PathGeometry();
         geometry.Figures.Add(figure);
-        _canvas.Children.Add(new Microsoft.UI.Xaml.Shapes.Path { Data = geometry, Fill = new SolidColorBrush(color) });
+        return new Microsoft.UI.Xaml.Shapes.Path { Data = geometry };
     }
 
     private void DrawSpoke(Point center, double maxRadius, double bearing)
@@ -107,14 +184,18 @@ public sealed partial class PolarChart : UserControl
         _canvas.Children.Add(new Line { X1 = center.X, Y1 = center.Y, X2 = end.X, Y2 = end.Y, Stroke = GridBrush, StrokeThickness = 1 });
     }
 
-    private void DrawLabel(Point center, double radius, double bearing, StorageUsage bucket)
+    private StackPanel DrawLabel(Point center, double radius, double bearing, StorageUsage bucket)
     {
         var alignment = bearing < 8 || bearing > 352 || Math.Abs(bearing - 180) < 8
             ? HorizontalAlignment.Center
             : bearing < 180 ? HorizontalAlignment.Left : HorizontalAlignment.Right;
 
         var name = bucket.Label.Length > MaxLabelLength ? bucket.Label[..(MaxLabelLength - 1)] + "…" : bucket.Label;
-        var label = new StackPanel { Children = { CreateText(name, alignment), CreateText(ByteSize.Format(bucket.SizeBytes), alignment) } };
+        var label = new StackPanel
+        {
+            Background = HitBrush,
+            Children = { CreateText(name, alignment), CreateText(ByteSize.Format(bucket.SizeBytes), alignment) },
+        };
         label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
 
         var anchor = ToPoint(center, radius, bearing);
@@ -125,6 +206,7 @@ public sealed partial class PolarChart : UserControl
             _ => anchor.X - label.DesiredSize.Width / 2,
         };
         Place(label, left, anchor.Y - 12);
+        return label;
     }
 
     private void DrawLegend(double height)

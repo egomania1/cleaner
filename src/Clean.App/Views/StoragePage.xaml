@@ -108,10 +108,32 @@
 
                 <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasResult, Mode=OneWay}">
                     <Border Padding="8" Style="{StaticResource CardStyle}">
-                        <controls:PolarChart Height="400" Buckets="{x:Bind ViewModel.Buckets, Mode=OneWay}" />
+                        <controls:PolarChart
+                            Height="400"
+                            BucketSelected="OnChartBucketSelected"
+                            Buckets="{x:Bind ViewModel.Buckets, Mode=OneWay}"
+                            SelectedBucket="{x:Bind ViewModel.SelectedBucket, Mode=OneWay}" />
                     </Border>
 
                     <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.ResultSummary, Mode=OneWay}" />
+
+                    <Border
+                        Padding="16,12"
+                        Style="{StaticResource CardStyle}"
+                        Visibility="{x:Bind ViewModel.HasNoDetail, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <FontIcon
+                                FontSize="14"
+                                Foreground="{StaticResource MutedTextBrush}"
+                                Glyph="&#xE8B0;" />
+                            <TextBlock Style="{StaticResource MutedTextStyle}" Text="Clique sur une partie du graphique ou sur une ligne pour savoir ce que c'est et si tu peux le supprimer." />
+                        </StackPanel>
+                    </Border>
+
+                    <controls:StorageDetailCard
+                        x:Name="DetailCard"
+                        Detail="{x:Bind ViewModel.SelectedDetail, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.HasDetail, Mode=OneWay}" />
 
                     <ItemsRepeater ItemsSource="{x:Bind ViewModel.BucketRows, Mode=OneWay}">
                         <ItemsRepeater.Layout>
@@ -119,7 +141,10 @@
                         </ItemsRepeater.Layout>
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate x:DataType="viewmodels:StorageBucketRow">
-                                <Border Padding="14,10" Style="{StaticResource CardStyle}">
+                                <Button
+                                    AutomationProperties.Name="{x:Bind Label}"
+                                    Click="OnBucketRowClicked"
+                                    Style="{StaticResource CardRowButtonStyle}">
                                     <Grid>
                                         <TextBlock Text="{x:Bind Label}" TextTrimming="CharacterEllipsis" />
                                         <TextBlock
@@ -127,7 +152,7 @@
                                             FontWeight="Bold"
                                             Text="{x:Bind SizeText}" />
                                     </Grid>
-                                </Border>
+                                </Button>
                             </DataTemplate>
                         </ItemsRepeater.ItemTemplate>
                     </ItemsRepeater>

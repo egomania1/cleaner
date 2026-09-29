@@ -43,7 +43,7 @@ public sealed class StorageAnalyzer(ILogger<StorageAnalyzer> logger) : IStorageA
                 ? MeasureDirectory(directory, tracker, cancellationToken)
                 : MeasureFile((FileInfo)entry, tracker);
 
-            usages.Add(new StorageUsage(entry.Name, sizeBytes));
+            usages.Add(new StorageUsage(entry.Name, sizeBytes, entry.FullName, IsDirectory: entry is DirectoryInfo));
         }
 
         tracker.Report();

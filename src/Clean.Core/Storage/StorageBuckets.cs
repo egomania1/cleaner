@@ -6,11 +6,7 @@ public static class StorageBuckets
 {
     public static IReadOnlyList<StorageUsage> TopWithRemainder(IEnumerable<StorageUsage> usages, int topCount)
     {
-        var sorted = usages
-            .Where(usage => usage.SizeBytes > 0)
-            .OrderByDescending(usage => usage.SizeBytes)
-            .ToList();
-
+        var sorted = SortBySize(usages);
         var buckets = sorted.Take(topCount).ToList();
         var remainder = sorted.Skip(topCount).ToList();
 
@@ -21,4 +17,13 @@ public static class StorageBuckets
 
         return buckets;
     }
+
+    public static IReadOnlyList<StorageUsage> Remainder(IEnumerable<StorageUsage> usages, int topCount) =>
+        SortBySize(usages).Skip(topCount).ToList();
+
+    private static List<StorageUsage> SortBySize(IEnumerable<StorageUsage> usages) =>
+        usages
+            .Where(usage => usage.SizeBytes > 0)
+            .OrderByDescending(usage => usage.SizeBytes)
+            .ToList();
 }

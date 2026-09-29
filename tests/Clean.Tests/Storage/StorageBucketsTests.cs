@@ -38,4 +38,14 @@ public class StorageBucketsTests
 
         Assert.Single(buckets);
     }
+
+    [Fact]
+    public void Remainder_ReturnsTheItemsGroupedUnderOthers()
+    {
+        StorageUsage[] usages = [new("Windows", 500), new("Users", 300), new("temp", 5), new("$SysReset", 1)];
+
+        var remainder = StorageBuckets.Remainder(usages, topCount: 2);
+
+        Assert.Equal(["temp", "$SysReset"], remainder.Select(usage => usage.Label));
+    }
 }

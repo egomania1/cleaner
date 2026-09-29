@@ -1,3 +1,5 @@
+using Clean.Core.Models;
+
 namespace Clean.App.ViewModels;
 
-public sealed record StorageBucketRow(string Label, string SizeText);
+public sealed record StorageBucketRow(StorageUsage Usage, string Label, string SizeText);
