@@ -50,7 +50,7 @@ function isDir(p: string): boolean {
   }
 }
 
-export function folderSize(targetPath: string | null): number {
+export async function folderSize(targetPath: string | null): Promise<number> {
   if (!targetPath || !isDir(targetPath)) return 0
   let total = 0
   const stack: string[] = [targetPath]
@@ -58,44 +58,48 @@ export function folderSize(targetPath: string | null): number {
     const dir = stack.pop()!
     let entries: fs.Dirent[]
     try {
-      entries = fs.readdirSync(dir, { withFileTypes: true })
+      entries = await fs.promises.readdir(dir, { withFileTypes: true })
     } catch {
       continue
     }
-    for (const entry of entries) {
-      const full = path.join(dir, entry.name)
-      try {
-        if (entry.isSymbolicLink()) continue
+    const sizes = await Promise.all(
+      entries.map(async (entry) => {
+        const full = path.join(dir, entry.name)
+        if (entry.isSymbolicLink()) return 0
         if (entry.isDirectory()) {
           stack.push(full)
-        } else {
-          total += fs.statSync(full).size
+          return 0
         }
-      } catch {
-        // ignore unreadable entries, matches Python's best-effort walk
-      }
-    }
+        try {
+          return (await fs.promises.stat(full)).size
+        } catch {
+          // ignore unreadable entries, matches Python's best-effort walk
+          return 0
+        }
+      })
+    )
+    for (const size of sizes) total += size
   }
   return total
 }
 
-export function clearFolderContents(targetPath: string): number {
+export async function clearFolderContents(targetPath: string): Promise<number> {
   if (!isDir(targetPath)) return 0
   let freed = 0
   let entries: fs.Dirent[]
   try {
-    entries = fs.readdirSync(targetPath, { withFileTypes: true })
+    entries = await fs.promises.readdir(targetPath, { withFileTypes: true })
   } catch {
     return 0
   }
   for (const entry of entries) {
     const full = path.join(targetPath, entry.name)
     try {
-      const sizeBefore = entry.isDirectory() ? folderSize(full) : fs.statSync(full).size
+      const sizeBefore = entry.isDirectory() ? await folderSize(full) : (await fs.promises.stat(full)).size
       if (entry.isDirectory() && !entry.isSymbolicLink()) {
-        fs.rmSync(full, { recursive: true, force: true })
+        await fs.promises.rm(full, { recursive: true, force: true })
       } else {
-        fs.rmSync(full, { force: true })
+        await fs.promises.rm(full, { force: true })
       }
       freed += sizeBefore
     } catch {
@@ -204,12 +208,12 @@ function findLatestAppVersionDirs(base: string): string[] {
   return versions.slice(0, -1).map(([, p]) => p)
 }
 
-export function listTopLevelEntries(driveLetter: string): [string, number][] {
+export async function listTopLevelEntries(driveLetter: string): Promise<[string, number][]> {
   const root = `${driveLetter}:\\`
   const entries: [string, number][] = []
   let scan: fs.Dirent[]
   try {
-    scan = fs.readdirSync(root, { withFileTypes: true })
+    scan = await fs.promises.readdir(root, { withFileTypes: true })
   } catch {
     return entries
   }
@@ -217,7 +221,8 @@ export function listTopLevelEntries(driveLetter: string): [string, number][] {
     const full = path.join(root, entry.name)
     let size = 0
     try {
-      size = entry.isDirectory() && !entry.isSymbolicLink() ? folderSize(full) : fs.statSync(full).size
+      size =
+        entry.isDirectory() && !entry.isSymbolicLink() ? await folderSize(full) : (await fs.promises.stat(full)).size
     } catch {
       continue
     }
@@ -461,9 +466,9 @@ export async function scanDrive(driveLetter: string): Promise<Rule[]> {
   const rules = await buildRules(driveLetter)
   for (const rule of rules) {
     if (rule.isRecycleBin) {
-      rule.size = folderSize(path.join(`${driveLetter}:\\`, "$Recycle.Bin"))
+      rule.size = await folderSize(path.join(`${driveLetter}:\\`, "$Recycle.Bin"))
     } else {
-      rule.size = folderSize(rule.path)
+      rule.size = await folderSize(rule.path)
     }
   }
   const withSize = rules.filter((r) => r.isRecycleBin || r.size > 0)
@@ -488,7 +493,7 @@ export async function cleanItems(
         await emptyRecycleBin(driveLetter)
         freedTotal += item.size
       } else if (item.path) {
-        freedTotal += clearFolderContents(item.path)
+        freedTotal += await clearFolderContents(item.path)
       }
     } catch {
       // best effort, same as Python version

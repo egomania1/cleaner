@@ -91,9 +91,9 @@ app.whenReady().then(() => {
     return rules
   })
 
-  ipcMain.handle("drive:overview", (_e, letter: unknown) => {
+  ipcMain.handle("drive:overview", async (_e, letter: unknown) => {
     if (!isValidDriveLetter(letter)) return []
-    const entries = listTopLevelEntries(letter)
+    const entries = await listTopLevelEntries(letter)
     return buildOverviewBuckets(entries, 8)
   })
 
