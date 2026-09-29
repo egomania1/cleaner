@@ -5,7 +5,7 @@
     xmlns:controls="using:Clean.App.Controls"
     Title="Clean">
     <Window.SystemBackdrop>
-        <DesktopAcrylicBackdrop />
+        <controls:AlwaysActiveAcrylicBackdrop />
     </Window.SystemBackdrop>
 
     <Grid x:Name="RootGrid" Loaded="OnRootLoaded">
