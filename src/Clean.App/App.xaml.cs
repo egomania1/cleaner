@@ -1,7 +1,10 @@
 using Clean.App.Services;
 using Clean.App.ViewModels;
 using Clean.Core.Interfaces;
+using Clean.Core.Rules;
+using Clean.Core.Scanning;
 using Clean.Infrastructure.FileSystem;
+using Clean.Infrastructure.Scanning;
 using Clean.Infrastructure.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -38,9 +41,17 @@ public partial class App : Application
         services.AddSingleton<IInstalledProgramCatalog, InstalledProgramCatalog>();
         services.AddSingleton<IEntryInspector, EntryInspector>();
         services.AddSingleton<NavigationService>();
+        services.AddSingleton(TimeProvider.System);
+
+        services.AddSingleton<IScanner>(provider => new KnownLocationScanner(
+            BuiltInRules.All,
+            provider.GetRequiredService<TimeProvider>(),
+            provider.GetRequiredService<ILogger<KnownLocationScanner>>()));
+        services.AddSingleton<IScanManager, ScanManager>();
 
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<StorageViewModel>();
+        services.AddSingleton<CleanerViewModel>();
         services.AddSingleton<MainWindow>();
 
         return services.BuildServiceProvider();

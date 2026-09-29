@@ -83,7 +83,11 @@
                         <ColumnDefinition />
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <controls:StatCard Grid.Column="0" Title="NETTOYABLE" Value="—" Caption="Pas encore analysé" />
+                    <controls:StatCard
+                        Grid.Column="0"
+                        Title="NETTOYABLE"
+                        Caption="{x:Bind ViewModel.Cleaner.DashboardCaption, Mode=OneWay}"
+                        Value="{x:Bind ViewModel.Cleaner.DashboardValue, Mode=OneWay}" />
                     <controls:StatCard Grid.Column="1" Title="GROS FICHIERS" Value="—" Caption="Pas encore analysé" />
                     <controls:StatCard Grid.Column="2" Title="DOUBLONS" Value="—" Caption="Pas encore analysé" />
                     <controls:StatCard Grid.Column="3" Title="APPLICATIONS" Value="—" Caption="Pas encore analysé" />

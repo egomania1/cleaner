@@ -10,4 +10,6 @@ public sealed record ScanItem(
     string RuleId,
     DateTimeOffset? LastModified,
     bool CanClean,
-    bool RequiresConfirmation);
+    bool RequiresConfirmation,
+    long FileCount,
+    long SkippedFileCount);

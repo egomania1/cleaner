@@ -10,12 +10,15 @@ namespace Clean.App.ViewModels;
 public sealed class DashboardViewModel(
     IDiskService diskService,
     StorageViewModel storage,
+    CleanerViewModel cleaner,
     NavigationService navigation,
     ILogger<DashboardViewModel> logger) : ObservableObject
 {
     private string? _errorMessage;
 
     public ObservableCollection<DiskItemViewModel> Disks { get; } = [];
+
+    public CleanerViewModel Cleaner => cleaner;
 
     public IAsyncRelayCommand AnalyzeCommand { get; } = new AsyncRelayCommand(async () =>
     {

@@ -15,5 +15,7 @@ internal static class TestItems
             RuleId: "TEST_RULE",
             LastModified: null,
             CanClean: canClean,
-            RequiresConfirmation: false);
+            RequiresConfirmation: false,
+            FileCount: 1,
+            SkippedFileCount: 0);
 }

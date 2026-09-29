@@ -7,4 +7,6 @@ public sealed record ScanResult(IReadOnlyList<ScanItem> Items, IReadOnlyList<Sca
     public long TotalBytes => Items.Sum(item => item.SizeBytes);
 
     public long CleanableBytes => Items.Where(item => item.CanClean).Sum(item => item.SizeBytes);
+
+    public long CleanableFileCount => Items.Where(item => item.CanClean).Sum(item => item.FileCount);
 }

@@ -17,11 +17,11 @@ public sealed partial class MainWindow : Window
     {
         ["dashboard"] = typeof(DashboardPage),
         ["storage"] = typeof(StoragePage),
+        ["cleaner"] = typeof(CleanerPage),
     };
 
     private static readonly Dictionary<string, PlaceholderContent> UpcomingPages = new()
     {
-        ["cleaner"] = new("Nettoyage", "Les fichiers temporaires et caches nettoyables, avec la raison de chaque proposition."),
         ["apps"] = new("Applications", "L'espace utilisé par chaque application, séparé entre cache nettoyable et données protégées."),
         ["duplicates"] = new("Doublons", "Les fichiers identiques présents à plusieurs endroits."),
         ["large-files"] = new("Gros fichiers", "Les fichiers les plus volumineux, à trier toi-même."),
