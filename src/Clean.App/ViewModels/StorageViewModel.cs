@@ -23,8 +23,12 @@ public sealed class StorageViewModel : ObservableObject
 
     private readonly IDiskService _diskService;
     private readonly IStorageAnalyzer _storageAnalyzer;
+    private readonly IEntryInspector _entryInspector;
     private readonly IFileExplorer _fileExplorer;
     private readonly ILogger<StorageViewModel> _logger;
+    private readonly Dictionary<string, EntryDetails> _detailsCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Stack<StorageUsage> _detailHistory = new();
+    private Task? _disksLoading;
 
     private StorageViewState _state = StorageViewState.Idle;
     private int _selectedDiskIndex = -1;
@@ -46,11 +50,13 @@ public sealed class StorageViewModel : ObservableObject
     public StorageViewModel(
         IDiskService diskService,
         IStorageAnalyzer storageAnalyzer,
+        IEntryInspector entryInspector,
         IFileExplorer fileExplorer,
         ILogger<StorageViewModel> logger)
     {
         _diskService = diskService;
         _storageAnalyzer = storageAnalyzer;
+        _entryInspector = entryInspector;
         _fileExplorer = fileExplorer;
         _logger = logger;
         AnalyzeCommand = new AsyncRelayCommand(AnalyzeAsync, () => SelectedDisk is not null);
@@ -172,35 +178,76 @@ public sealed class StorageViewModel : ObservableObject
 
     public void SelectBucket(StorageUsage bucket)
     {
-        _detailCancellation?.Cancel();
-        _detailCancellation = new CancellationTokenSource();
-
-        var groupedItems = bucket.Path is null ? StorageBuckets.Remainder(_usages, ChartSliceCount) : [];
-        var analyzedBytes = _usages.Sum(usage => usage.SizeBytes);
-
+        _detailHistory.Clear();
         SelectedBucket = bucket;
-        SelectedDetail = new StorageDetailViewModel(bucket, analyzedBytes, groupedItems, _fileExplorer, CloseDetail);
-        _ = SelectedDetail.LoadChildrenAsync(_storageAnalyzer, _detailCancellation.Token);
+        ShowDetail(bucket);
     }
 
     public void CloseDetail()
     {
         _detailCancellation?.Cancel();
         _detailCancellation = null;
+        _detailHistory.Clear();
         SelectedBucket = null;
         SelectedDetail = null;
+    }
+
+    private void OpenChild(StorageUsage child)
+    {
+        if (SelectedDetail is not null)
+        {
+            _detailHistory.Push(SelectedDetail.Usage);
+        }
+
+        ShowDetail(child);
+    }
+
+    private void GoBack()
+    {
+        if (_detailHistory.TryPop(out var previous))
+        {
+            ShowDetail(previous);
+        }
+    }
+
+    private void ShowDetail(StorageUsage usage)
+    {
+        _detailCancellation?.Cancel();
+        _detailCancellation = new CancellationTokenSource();
+
+        var groupedItems = usage.Path is null ? StorageBuckets.Remainder(_usages, ChartSliceCount) : [];
+        var analyzedBytes = _usages.Sum(entry => entry.SizeBytes);
+        var navigation = new DetailNavigation(
+            Close: CloseDetail,
+            OpenChild: OpenChild,
+            GoBack: _detailHistory.Count > 0 ? GoBack : null,
+            BackLabel: _detailHistory.TryPeek(out var parent) ? parent.Label : null);
+
+        SelectedDetail = new StorageDetailViewModel(usage, analyzedBytes, groupedItems, _fileExplorer, navigation);
+        _ = SelectedDetail.LoadDetailsAsync(InspectAsync, _detailCancellation.Token);
+    }
+
+    private async Task<EntryDetails> InspectAsync(StorageUsage usage, CancellationToken cancellationToken)
+    {
+        if (_detailsCache.TryGetValue(usage.Path!, out var cached))
+        {
+            return cached;
+        }
+
+        var details = await _entryInspector.InspectAsync(usage.Path!, usage.IsDirectory, cancellationToken);
+        _detailsCache[usage.Path!] = details;
+        return details;
     }
 
     private DiskItemViewModel? SelectedDisk =>
         SelectedDiskIndex >= 0 && SelectedDiskIndex < Disks.Count ? Disks[SelectedDiskIndex] : null;
 
-    public async Task EnsureDisksLoadedAsync()
-    {
-        if (Disks.Count > 0)
-        {
-            return;
-        }
+    // The page and the dashboard's "Analyze" button can both ask for the disks at the same moment;
+    // sharing one loading task keeps them from filling the list twice.
+    public Task EnsureDisksLoadedAsync() => _disksLoading ??= LoadDisksAsync();
 
+    private async Task LoadDisksAsync()
+    {
         try
         {
             foreach (var disk in await _diskService.GetDisksAsync(CancellationToken.None))
@@ -295,6 +342,7 @@ public sealed class StorageViewModel : ObservableObject
     {
         _resultDiskName = diskName;
         _usages = usages;
+        _detailsCache.Clear();
         Buckets = StorageBuckets.TopWithRemainder(usages, ChartSliceCount);
         BucketRows = Buckets.Select(bucket => new StorageBucketRow(bucket, bucket.Label, ByteSize.Format(bucket.SizeBytes))).ToList();
         ProgressPercent = 100;

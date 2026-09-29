@@ -5,6 +5,7 @@ public enum LocationKind
     System,
     Applications,
     UserData,
+    Cache,
     RecycleBin,
     SystemFile,
     Group,

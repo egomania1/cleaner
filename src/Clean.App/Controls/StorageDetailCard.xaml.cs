@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Clean.App.ViewModels;
+using Clean.Core.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -64,6 +65,14 @@ public sealed partial class StorageDetailCard : UserControl
         {
             CompositionTarget.Rendering -= OnRendering;
             _isAnimating = false;
+        }
+    }
+
+    private void OnChildClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: StorageUsage child })
+        {
+            Detail?.OpenChild(child);
         }
     }
 

@@ -12,28 +12,33 @@ namespace Clean.App.ViewModels;
 public sealed class StorageDetailViewModel : ObservableObject
 {
     private const int ChildCount = 6;
+    private const int CompositionCount = 4;
+    private const int ListedProgramCount = 3;
     private static readonly CultureInfo French = CultureInfo.GetCultureInfo("fr-FR");
 
     private readonly StorageUsage _usage;
-    private bool _isLoadingChildren;
-    private string? _childrenMessage;
+    private readonly DetailNavigation _navigation;
+    private bool _isLoading;
+    private string? _loadingMessage;
 
     public StorageDetailViewModel(
         StorageUsage usage,
         long analyzedBytes,
         IReadOnlyList<StorageUsage> groupedItems,
         IFileExplorer fileExplorer,
-        Action close)
+        DetailNavigation navigation)
     {
         _usage = usage;
+        _navigation = navigation;
         var description = LocationGuide.Describe(usage);
 
         Name = usage.Label;
+        PathText = usage.Path ?? string.Empty;
+        Kind = description.Kind;
         Verdict = description.Verdict.ToUpper(French);
         Risk = description.Risk;
         Summary = description.Summary;
         Advice = description.Advice;
-        Kind = description.Kind;
         SizeText = ByteSize.Format(usage.SizeBytes);
         ShareText = analyzedBytes > 0
             ? $"{(usage.SizeBytes * 100.0 / analyzedBytes).ToString("0.#", French)} % de l'espace analysé"
@@ -42,19 +47,27 @@ public sealed class StorageDetailViewModel : ObservableObject
         IsGroup = usage.Path is null;
         CanHaveChildren = IsGroup || usage.IsDirectory;
         ChildrenTitle = IsGroup ? "ÉLÉMENTS REGROUPÉS" : "CE QU'IL CONTIENT";
+        BackText = $"‹ {navigation.BackLabel}";
 
-        CloseCommand = new RelayCommand(close);
+        CloseCommand = new RelayCommand(navigation.Close);
+        BackCommand = new RelayCommand(() => navigation.GoBack?.Invoke(), () => navigation.GoBack is not null);
         RevealCommand = new RelayCommand(() => fileExplorer.Reveal(usage.Path!), () => usage.Path is not null);
 
         if (IsGroup)
         {
-            ShowChildren(StorageBuckets.TopWithRemainder(groupedItems, ChildCount));
+            ShowChildren(groupedItems);
         }
     }
 
     public StorageUsage Usage => _usage;
 
     public string Name { get; }
+
+    public string PathText { get; }
+
+    public bool HasPath => !IsGroup;
+
+    public LocationKind Kind { get; }
 
     public string Verdict { get; }
 
@@ -64,8 +77,6 @@ public sealed class StorageDetailViewModel : ObservableObject
 
     public string Advice { get; }
 
-    public LocationKind Kind { get; }
-
     public string SizeText { get; }
 
     public string ShareText { get; }
@@ -74,52 +85,65 @@ public sealed class StorageDetailViewModel : ObservableObject
 
     public bool CanReveal => !IsGroup;
 
+    public bool CanGoBack => _navigation.GoBack is not null;
+
+    public string BackText { get; }
+
     public bool CanHaveChildren { get; }
 
     public string ChildrenTitle { get; }
+
+    public ObservableCollection<DetailFact> Facts { get; } = [];
 
     public ObservableCollection<StorageChildRow> Children { get; } = [];
 
     public RelayCommand CloseCommand { get; }
 
+    public RelayCommand BackCommand { get; }
+
     public RelayCommand RevealCommand { get; }
 
-    public bool IsLoadingChildren
+    public bool IsLoading
     {
-        get => _isLoadingChildren;
-        private set => SetProperty(ref _isLoadingChildren, value);
+        get => _isLoading;
+        private set => SetProperty(ref _isLoading, value);
     }
 
-    public string? ChildrenMessage
+    public string? LoadingMessage
     {
-        get => _childrenMessage;
+        get => _loadingMessage;
         private set
         {
-            if (SetProperty(ref _childrenMessage, value))
+            if (SetProperty(ref _loadingMessage, value))
             {
-                OnPropertyChanged(nameof(HasChildrenMessage));
+                OnPropertyChanged(nameof(HasLoadingMessage));
             }
         }
     }
 
-    public bool HasChildrenMessage => ChildrenMessage is not null;
+    public bool HasLoadingMessage => LoadingMessage is not null;
 
-    public async Task LoadChildrenAsync(IStorageAnalyzer storageAnalyzer, CancellationToken cancellationToken)
+    public void OpenChild(StorageUsage child) => _navigation.OpenChild(child);
+
+    public async Task LoadDetailsAsync(
+        Func<StorageUsage, CancellationToken, Task<EntryDetails>> inspect,
+        CancellationToken cancellationToken)
     {
-        if (!_usage.IsDirectory || _usage.Path is null)
+        if (IsGroup)
         {
             return;
         }
 
-        IsLoadingChildren = true;
+        IsLoading = true;
         try
         {
-            var children = await storageAnalyzer.AnalyzeAsync(_usage.Path, null, cancellationToken);
-            ShowChildren(StorageBuckets.TopWithRemainder(children, ChildCount));
+            var details = await inspect(_usage, cancellationToken);
+            ShowFacts(details);
+            ShowChildren(details.Children);
 
-            if (Children.Count == 0)
+            if (_usage.IsDirectory && Children.Count == 0)
             {
-                ChildrenMessage = "Ce dossier est vide, ou son contenu n'est pas lisible sans droits administrateur.";
+                LoadingMessage = "Ce dossier est vide, ou son contenu n'est pas lisible sans droits administrateur.";
             }
         }
         catch (OperationCanceledException)
@@ -127,21 +151,114 @@ public sealed class StorageDetailViewModel : ObservableObject
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            ChildrenMessage = "Clean n'a pas l'autorisation de lire ce dossier.";
+            LoadingMessage = "Clean n'a pas l'autorisation de lire cet emplacement.";
         }
         finally
         {
-            IsLoadingChildren = false;
+            IsLoading = false;
         }
     }
 
-    private void ShowChildren(IReadOnlyList<StorageUsage> children)
+    private void ShowFacts(EntryDetails details)
     {
-        var largest = children.Count > 0 ? children.Max(child => child.SizeBytes) : 0;
-        foreach (var child in children)
+        var now = DateTimeOffset.Now;
+        Facts.Add(new DetailFact("Type", DescribeType(details)));
+
+        foreach (var fact in DescribePrograms(details.Programs))
         {
-            var ratio = largest > 0 ? (double)child.SizeBytes / largest : 0;
-            Children.Add(new StorageChildRow(child.Label, ByteSize.Format(child.SizeBytes), ratio));
+            Facts.Add(fact);
+        }
+
+        if (details.IsDirectory)
+        {
+            Facts.Add(new DetailFact(
+                "Contenu",
+                $"{details.FileCount.ToString("N0", French)} fichiers dans {details.FolderCount.ToString("N0", French)} dossiers"));
+        }
+
+        var composition = FileCategories.Summarize(details.Composition, CompositionCount);
+        if (details.IsDirectory && composition.Count > 0)
+        {
+            Facts.Add(new DetailFact(
+                "Composition",
+                string.Join("  ·  ", composition.Select(share => $"{share.Category} {share.Percent.ToString("0", French)} %"))));
+        }
+
+        if (details.LastModified is { } lastModified)
+        {
+            Facts.Add(new DetailFact(details.IsDirectory ? "Dernière activité" : "Modifié le", RelativeDate.Format(lastModified, now)));
+        }
+
+        if (details.Created is { } created)
+        {
+            Facts.Add(new DetailFact("Créé le", RelativeDate.Format(created, now)));
+        }
+    }
+
+    private string DescribeType(EntryDetails details)
+    {
+        if (details.IsDirectory)
+        {
+            return "Dossier";
+        }
+
+        var extension = Path.GetExtension(_usage.Label);
+        return string.IsNullOrEmpty(extension)
+            ? "Fichier sans extension"
+            : $"Fichier {extension.ToLower(French)} ({FileCategories.CategoryOf(extension).ToLower(French)})";
+    }
+
+    private static IEnumerable<DetailFact> DescribePrograms(IReadOnlyList<ProgramInfo> programs)
+    {
+        if (programs.Count == 1)
+        {
+            var program = programs[0];
+            yield return new DetailFact("Application", DescribeProgram(program));
+            if (program.InstalledOn is { } installedOn)
+            {
+                yield return new DetailFact("Installée le", installedOn.ToString("d MMMM yyyy", French));
+            }
+        }
+        else if (programs.Count > 1)
+        {
+            var names = string.Join(", ", programs.Take(ListedProgramCount).Select(program => program.Name));
+            var more = programs.Count > ListedProgramCount ? $" et {programs.Count - ListedProgramCount} autres" : string.Empty;
+            yield return new DetailFact("Applications", $"{programs.Count} installées ici : {names}{more}");
+        }
+    }
+
+    private static string DescribeProgram(ProgramInfo program)
+    {
+        var text = program.Name;
+        if (!string.IsNullOrWhiteSpace(program.Publisher))
+        {
+            text += $" — {program.Publisher}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(program.Version))
+        {
+            text += $", version {program.Version}";
+        }
+
+        return text;
+    }
+
+    private void ShowChildren(IEnumerable<StorageUsage> children)
+    {
+        var shown = StorageBuckets.TopWithRemainder(children, ChildCount);
+        var largest = shown.Count > 0 ? shown.Max(child => child.SizeBytes) : 0;
+
+        foreach (var child in shown)
+        {
+            var description = LocationGuide.Describe(child);
+            Children.Add(new StorageChildRow(
+                Usage: child,
+                Label: child.Label,
+                SizeText: ByteSize.Format(child.SizeBytes),
+                Ratio: largest > 0 ? (double)child.SizeBytes / largest : 0,
+                Summary: description.Summary,
+                Risk: description.Risk,
+                CanOpen: child.Path is not null));
         }
     }
 }

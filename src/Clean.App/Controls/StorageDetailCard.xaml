@@ -37,8 +37,20 @@
                 Grid.Column="1"
                 Padding="28,24,28,28"
                 Spacing="16">
-                <Grid>
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button
+                        Padding="10,4"
+                        Command="{x:Bind Detail.BackCommand, Mode=OneWay}"
+                        Content="{x:Bind Detail.BackText, Mode=OneWay}"
+                        Style="{StaticResource LiquidButtonStyle}"
+                        Visibility="{x:Bind Detail.CanGoBack, Mode=OneWay}" />
                     <TextBlock
+                        Grid.Column="1"
                         VerticalAlignment="Center"
                         CharacterSpacing="60"
                         FontSize="12"
@@ -46,6 +58,7 @@
                         Foreground="{x:Bind Detail.Risk, Mode=OneWay, Converter={StaticResource RiskBrush}}"
                         Text="{x:Bind Detail.Verdict, Mode=OneWay}" />
                     <Button
+                        Grid.Column="2"
                         Padding="8"
                         HorizontalAlignment="Right"
                         Background="Transparent"
@@ -73,11 +86,60 @@
                             Text="{x:Bind Detail.ShareText, Mode=OneWay}" />
                     </StackPanel>
                     <TextBlock
+                        FontSize="12"
+                        Foreground="{StaticResource MutedTextBrush}"
+                        IsTextSelectionEnabled="True"
+                        Text="{x:Bind Detail.PathText, Mode=OneWay}"
+                        TextWrapping="Wrap"
+                        Visibility="{x:Bind Detail.HasPath, Mode=OneWay}" />
+                    <TextBlock
                         FontSize="14"
                         Foreground="{StaticResource MutedTextBrush}"
                         Text="{x:Bind Detail.Summary, Mode=OneWay}"
                         TextWrapping="Wrap" />
                 </StackPanel>
+
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="10"
+                    Visibility="{x:Bind Detail.IsLoading, Mode=OneWay}">
+                    <controls:LumaSpin Width="18" Height="18" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{StaticResource MutedTextStyle}"
+                        Text="Analyse détaillée en cours…" />
+                </StackPanel>
+
+                <TextBlock
+                    Style="{StaticResource MutedTextStyle}"
+                    Text="{x:Bind Detail.LoadingMessage, Mode=OneWay}"
+                    Visibility="{x:Bind Detail.HasLoadingMessage, Mode=OneWay}" />
+
+                <ItemsRepeater ItemsSource="{x:Bind Detail.Facts, Mode=OneWay}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Spacing="8" />
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodels:DetailFact">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    FontSize="13"
+                                    Foreground="{StaticResource MutedTextBrush}"
+                                    Text="{x:Bind Label}" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    FontSize="13"
+                                    IsTextSelectionEnabled="True"
+                                    Text="{x:Bind Value}"
+                                    TextWrapping="Wrap" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
 
                 <StackPanel Spacing="6">
                     <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="PEUX-TU LE SUPPRIMER ?" />
@@ -87,53 +149,61 @@
                         TextWrapping="Wrap" />
                 </StackPanel>
 
-                <StackPanel Spacing="10" Visibility="{x:Bind Detail.CanHaveChildren, Mode=OneWay}">
+                <StackPanel Spacing="6" Visibility="{x:Bind Detail.CanHaveChildren, Mode=OneWay}">
                     <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="{x:Bind Detail.ChildrenTitle, Mode=OneWay}" />
-
-                    <StackPanel
-                        Orientation="Horizontal"
-                        Spacing="10"
-                        Visibility="{x:Bind Detail.IsLoadingChildren, Mode=OneWay}">
-                        <controls:LumaSpin Width="18" Height="18" />
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            Style="{StaticResource MutedTextStyle}"
-                            Text="Analyse du contenu…" />
-                    </StackPanel>
-
-                    <TextBlock
-                        Style="{StaticResource MutedTextStyle}"
-                        Text="{x:Bind Detail.ChildrenMessage, Mode=OneWay}"
-                        Visibility="{x:Bind Detail.HasChildrenMessage, Mode=OneWay}" />
 
                     <ItemsRepeater ItemsSource="{x:Bind Detail.Children, Mode=OneWay}">
                         <ItemsRepeater.Layout>
-                            <StackLayout Spacing="10" />
+                            <StackLayout Spacing="2" />
                         </ItemsRepeater.Layout>
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate x:DataType="viewmodels:StorageChildRow">
-                                <StackPanel Spacing="4">
-                                    <Grid ColumnSpacing="12">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock
-                                            FontSize="13"
-                                            Text="{x:Bind Label}"
-                                            TextTrimming="CharacterEllipsis" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            FontSize="13"
-                                            FontWeight="SemiBold"
-                                            Text="{x:Bind SizeText}" />
-                                    </Grid>
-                                    <ProgressBar
-                                        Height="4"
-                                        MinHeight="4"
-                                        Style="{StaticResource UsageBarStyle}"
-                                        Value="{x:Bind Ratio}" />
-                                </StackPanel>
+                                <Button
+                                    AutomationProperties.Name="{x:Bind Label}"
+                                    Click="OnChildClicked"
+                                    IsEnabled="{x:Bind CanOpen}"
+                                    Style="{StaticResource ChildRowButtonStyle}"
+                                    Tag="{x:Bind Usage}">
+                                    <StackPanel Spacing="6">
+                                        <Grid ColumnSpacing="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Ellipse
+                                                Width="8"
+                                                Height="8"
+                                                Margin="0,6,0,0"
+                                                VerticalAlignment="Top"
+                                                Fill="{x:Bind Risk, Converter={StaticResource RiskBrush}}" />
+                                            <StackPanel Grid.Column="1" Spacing="2">
+                                                <TextBlock
+                                                    FontSize="13"
+                                                    FontWeight="SemiBold"
+                                                    Text="{x:Bind Label}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                                <TextBlock
+                                                    FontSize="12"
+                                                    Foreground="{StaticResource MutedTextBrush}"
+                                                    MaxLines="2"
+                                                    Text="{x:Bind Summary}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                Grid.Column="2"
+                                                FontSize="13"
+                                                FontWeight="SemiBold"
+                                                Text="{x:Bind SizeText}" />
+                                        </Grid>
+                                        <ProgressBar
+                                            Height="4"
+                                            MinHeight="4"
+                                            Style="{StaticResource UsageBarStyle}"
+                                            Value="{x:Bind Ratio}" />
+                                    </StackPanel>
+                                </Button>
                             </DataTemplate>
                         </ItemsRepeater.ItemTemplate>
                     </ItemsRepeater>
