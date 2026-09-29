@@ -104,12 +104,11 @@
                     </Border>
 
                     <Border Grid.Column="1" Style="{StaticResource CardStyle}">
-                        <Button
+                        <controls:ShinyButton
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Command="{x:Bind ViewModel.AnalyzeCommand}"
                             Content="Analyser le PC"
-                            Style="{StaticResource LiquidButtonStyle}"
                             ToolTipService.ToolTip="Analyse ce qui occupe la place sur le disque système." />
                     </Border>
                 </Grid>

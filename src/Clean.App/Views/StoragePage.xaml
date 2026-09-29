@@ -40,12 +40,11 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
 
-                    <Button
+                    <controls:ShinyButton
                         Grid.Column="1"
-                        Padding="28,10"
+                        Padding="30,9"
                         Command="{x:Bind ViewModel.AnalyzeCommand}"
-                        Content="Analyser"
-                        Style="{StaticResource LiquidButtonStyle}" />
+                        Content="Analyser" />
                 </Grid>
 
                 <TextBlock
