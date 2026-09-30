@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "USER_TEMP",
+      "name": "Fichiers temporaires de ton compte",
+      "description": "Fichiers laissés par les applications et les installations. Ceux modifiés depuis moins de 2 jours sont ignorés, car ils peuvent encore servir.",
+      "category": "temporary",
+      "risk": "safe",
+      "paths": ["%LOCALAPPDATA%\\Temp", "%TEMP%", "%TMP%"],
+      "minimumAgeDays": 2,
+      "automaticCleaningAllowed": true
+    },
+    {
+      "id": "WINDOWS_TEMP",
+      "name": "Fichiers temporaires de Windows",
+      "description": "Fichiers laissés par Windows et les installations. Ceux modifiés depuis moins de 2 jours sont ignorés, car ils peuvent encore servir.",
+      "category": "temporary",
+      "risk": "safe",
+      "paths": ["%WINDIR%\\Temp"],
+      "minimumAgeDays": 2,
+      "automaticCleaningAllowed": true
+    }
+  ]
+}

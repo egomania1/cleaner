@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "WINDOWS_ERROR_REPORTS",
+      "name": "Rapports d'erreurs Windows",
+      "description": "Rapports envoyés ou en attente d'envoi à Microsoft après un plantage. Inutiles une fois envoyés.",
+      "category": "crashDumps",
+      "risk": "safe",
+      "paths": ["%PROGRAMDATA%\\Microsoft\\Windows\\WER", "%LOCALAPPDATA%\\Microsoft\\Windows\\WER"],
+      "minimumAgeDays": 7,
+      "automaticCleaningAllowed": true
+    },
+    {
+      "id": "APP_CRASH_DUMPS",
+      "name": "Rapports de plantage des applications",
+      "description": "Copies de la mémoire enregistrées quand une application a planté. Utiles seulement pour un diagnostic.",
+      "category": "crashDumps",
+      "risk": "safe",
+      "paths": ["%LOCALAPPDATA%\\CrashDumps"],
+      "minimumAgeDays": 7,
+      "automaticCleaningAllowed": true
+    }
+  ]
+}

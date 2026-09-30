@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "NVIDIA_DX_CACHE",
+      "name": "Cache des shaders NVIDIA (DirectX)",
+      "description": "Cache de shaders recréé automatiquement par le pilote graphique. Les jeux peuvent ramer quelques secondes aux premiers lancements, le temps de le reconstruire.",
+      "category": "gpuCache",
+      "risk": "safe",
+      "paths": ["%LOCALAPPDATA%\\NVIDIA\\DXCache"],
+      "minimumAgeDays": 0,
+      "automaticCleaningAllowed": true
+    },
+    {
+      "id": "NVIDIA_GL_CACHE",
+      "name": "Cache des shaders NVIDIA (OpenGL)",
+      "description": "Cache de shaders recréé automatiquement par le pilote graphique. Les jeux peuvent ramer quelques secondes aux premiers lancements, le temps de le reconstruire.",
+      "category": "gpuCache",
+      "risk": "safe",
+      "paths": ["%LOCALAPPDATA%\\NVIDIA\\GLCache"],
+      "minimumAgeDays": 0,
+      "automaticCleaningAllowed": true
+    },
+    {
+      "id": "AMD_DX_CACHE",
+      "name": "Cache des shaders AMD (DirectX)",
+      "description": "Cache de shaders recréé automatiquement par le pilote graphique. Les jeux peuvent ramer quelques secondes aux premiers lancements, le temps de le reconstruire.",
+      "category": "gpuCache",
+      "risk": "safe",
+      "paths": ["%LOCALAPPDATA%\\AMD\\DxCache"],
+      "minimumAgeDays": 0,
+      "automaticCleaningAllowed": true
+    },
+    {
+      "id": "AMD_GL_CACHE",
+      "name": "Cache des shaders AMD (OpenGL)",
+      "description": "Cache de shaders recréé automatiquement par le pilote graphique. Les jeux peuvent ramer quelques secondes aux premiers lancements, le temps de le reconstruire.",
+      "category": "gpuCache",
+      "risk": "safe",
+      "paths": ["%LOCALAPPDATA%\\AMD\\GLCache"],
+      "minimumAgeDays": 0,
+      "automaticCleaningAllowed": true
+    },
+    {
+      "id": "DIRECTX_SHADER_CACHE",
+      "name": "Cache des shaders DirectX",
+      "description": "Cache de shaders géré par Windows pour tous les jeux et applications 3D. Il se reconstruit automatiquement.",
+      "category": "gpuCache",
+      "risk": "safe",
+      "paths": ["%LOCALAPPDATA%\\D3DSCache"],
+      "minimumAgeDays": 0,
+      "automaticCleaningAllowed": true
+    }
+  ]
+}

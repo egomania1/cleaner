@@ -4,6 +4,7 @@ using Clean.Core.Interfaces;
 using Clean.Core.Rules;
 using Clean.Core.Scanning;
 using Clean.Infrastructure.FileSystem;
+using Clean.Infrastructure.Rules;
 using Clean.Infrastructure.Scanning;
 using Clean.Infrastructure.Windows;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,8 +44,12 @@ public partial class App : Application
         services.AddSingleton<NavigationService>();
         services.AddSingleton(TimeProvider.System);
 
+        services.AddSingleton<JsonRuleLoader>();
+        services.AddSingleton<IRuleEngine>(provider =>
+            new RuleEngine(provider.GetRequiredService<JsonRuleLoader>().Load(JsonRuleLoader.DefaultFolder).Rules));
+
         services.AddSingleton<IScanner>(provider => new KnownLocationScanner(
-            BuiltInRules.All,
+            provider.GetRequiredService<IRuleEngine>().Rules,
             provider.GetRequiredService<TimeProvider>(),
             provider.GetRequiredService<ILogger<KnownLocationScanner>>()));
         services.AddSingleton<IScanManager, ScanManager>();

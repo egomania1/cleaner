@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "NPM_CACHE",
+      "name": "Cache npm",
+      "description": "Paquets JavaScript déjà téléchargés par npm. Ils se retéléchargent au besoin, mais les prochaines installations seront plus lentes.",
+      "category": "developer",
+      "risk": "caution",
+      "paths": ["%LOCALAPPDATA%\\npm-cache", "%APPDATA%\\npm-cache"],
+      "minimumAgeDays": 0,
+      "automaticCleaningAllowed": false
+    },
+    {
+      "id": "PIP_CACHE",
+      "name": "Cache pip",
+      "description": "Paquets Python déjà téléchargés par pip. Ils se retéléchargent au besoin.",
+      "category": "developer",
+      "risk": "caution",
+      "paths": ["%LOCALAPPDATA%\\pip\\cache"],
+      "minimumAgeDays": 0,
+      "automaticCleaningAllowed": false
+    },
+    {
+      "id": "NUGET_HTTP_CACHE",
+      "name": "Cache de téléchargement NuGet",
+      "description": "Copies temporaires des paquets .NET téléchargés. Les paquets installés dans tes projets ne sont pas concernés.",
+      "category": "developer",
+      "risk": "safe",
+      "paths": ["%LOCALAPPDATA%\\NuGet\\v3-cache"],
+      "minimumAgeDays": 0,
+      "automaticCleaningAllowed": true
+    }
+  ]
+}
