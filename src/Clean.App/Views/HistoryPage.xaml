@@ -1,0 +1,156 @@
+<Page
+    x:Class="Clean.App.Views.HistoryPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Clean.App.Controls"
+    xmlns:viewmodels="using:Clean.App.ViewModels">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled">
+        <!-- The content column grows up to 1600px; the side columns share what is left, which keeps it centered. -->
+        <Grid Padding="32,8,32,32">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="100*" MaxWidth="1600" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="1" Spacing="16">
+                <StackPanel Spacing="4">
+                    <controls:PageTitle Index="08" Text="Historique" />
+                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Chaque nettoyage, ce qu'il a retiré, et la possibilité de revenir en arrière." />
+                </StackPanel>
+
+                <Grid ColumnSpacing="12" Visibility="{x:Bind ViewModel.HasSessions, Mode=OneWay}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="RESTAURABLE" />
+                            <controls:AnimatedText
+                                HorizontalAlignment="Left"
+                                Effect="Decrypt"
+                                FontSize="32"
+                                FontWeight="Bold"
+                                Text="{x:Bind ViewModel.RestorableText, Mode=OneWay}" />
+                            <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.RestorableCaption, Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="LIBÉRÉ" />
+                            <controls:AnimatedText
+                                HorizontalAlignment="Left"
+                                Effect="Decrypt"
+                                FontSize="32"
+                                FontWeight="Bold"
+                                Text="{x:Bind ViewModel.FreedText, Mode=OneWay}" />
+                            <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.FreedCaption}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="12"
+                    Visibility="{x:Bind ViewModel.IsBusy, Mode=OneWay}">
+                    <controls:LumaSpin Width="20" Height="20" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{StaticResource MutedTextStyle}"
+                        Text="Opération en cours…" />
+                </StackPanel>
+
+                <TextBlock
+                    Style="{StaticResource MutedTextStyle}"
+                    Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                    TextWrapping="Wrap"
+                    Visibility="{x:Bind ViewModel.HasStatusMessage, Mode=OneWay}" />
+
+                <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
+                    <TextBlock
+                        Style="{StaticResource MutedTextStyle}"
+                        Text="Aucun nettoyage pour l'instant. Chaque nettoyage lancé depuis la page Nettoyage apparaîtra ici, restaurable pendant 7 jours."
+                        TextWrapping="Wrap" />
+                </Border>
+
+                <ItemsRepeater IsHitTestVisible="{x:Bind ViewModel.IsNotBusy, Mode=OneWay}" ItemsSource="{x:Bind ViewModel.Sessions, Mode=OneWay}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Spacing="8" />
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodels:CleaningSessionRow">
+                            <Border Style="{StaticResource CardStyle}">
+                                <Grid ColumnSpacing="24">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Spacing="6">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <TextBlock
+                                                FontSize="15"
+                                                FontWeight="SemiBold"
+                                                Text="{x:Bind DateText}" />
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                CharacterSpacing="60"
+                                                FontSize="11"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource SafeBrush}"
+                                                Text="{x:Bind StatusText}" />
+                                        </StackPanel>
+                                        <TextBlock
+                                            FontSize="13"
+                                            Foreground="{StaticResource MutedTextBrush}"
+                                            Text="{x:Bind LocationsText}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="{StaticResource MutedTextBrush}"
+                                            Opacity="0.8"
+                                            Text="{x:Bind FilesText}" />
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="{StaticResource MutedTextBrush}"
+                                            Opacity="0.8"
+                                            Text="{x:Bind ClosedText}"
+                                            Visibility="{x:Bind HasClosedText}" />
+                                    </StackPanel>
+
+                                    <StackPanel
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Right"
+                                        Spacing="10">
+                                        <TextBlock
+                                            HorizontalAlignment="Right"
+                                            FontSize="22"
+                                            FontWeight="Bold"
+                                            Text="{x:Bind SizeText}" />
+                                        <StackPanel
+                                            Orientation="Horizontal"
+                                            Spacing="8"
+                                            Visibility="{x:Bind CanRestore}">
+                                            <Button
+                                                Padding="18,8"
+                                                Command="{x:Bind RestoreCommand}"
+                                                Content="Restaurer"
+                                                Style="{StaticResource LiquidButtonStyle}" />
+                                            <Button
+                                                Padding="18,8"
+                                                Command="{x:Bind FreeCommand}"
+                                                Content="Libérer maintenant"
+                                                Style="{StaticResource LiquidButtonStyle}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

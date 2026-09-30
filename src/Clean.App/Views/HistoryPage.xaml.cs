@@ -5,20 +5,20 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace Clean.App.Views;
 
-public sealed partial class CleanerPage : Page
+public sealed partial class HistoryPage : Page
 {
-    public CleanerPage()
+    public HistoryPage()
     {
         InitializeComponent();
     }
 
-    public CleanerViewModel ViewModel { get; } = App.Services.GetRequiredService<CleanerViewModel>();
+    public HistoryViewModel ViewModel { get; } = App.Services.GetRequiredService<HistoryViewModel>();
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
         ViewModel.ConfirmAsync = confirmation => ConfirmationDialog.ShowAsync(this, confirmation);
-        await ViewModel.EnsureDisksLoadedAsync();
+        await ViewModel.LoadAsync();
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)

@@ -19,6 +19,7 @@ public sealed partial class MainWindow : Window
         ["dashboard"] = typeof(DashboardPage),
         ["storage"] = typeof(StoragePage),
         ["cleaner"] = typeof(CleanerPage),
+        ["history"] = typeof(HistoryPage),
     };
 
     private static readonly Dictionary<string, PlaceholderContent> UpcomingPages = new()
@@ -27,7 +28,6 @@ public sealed partial class MainWindow : Window
         ["duplicates"] = new("05", "Doublons", "Les fichiers identiques présents à plusieurs endroits."),
         ["large-files"] = new("06", "Gros fichiers", "Les fichiers les plus volumineux, à trier toi-même."),
         ["developer"] = new("07", "Développeur", "Les dossiers node_modules, bin/obj et les caches npm, NuGet ou pip."),
-        ["history"] = new("08", "Historique", "L'évolution de l'espace utilisé au fil du temps."),
         ["startup"] = new("09", "Démarrage", "Les applications lancées au démarrage de Windows."),
         ["settings"] = new("10", "Paramètres", "Thème, options d'analyse, exclusions et confidentialité."),
     };

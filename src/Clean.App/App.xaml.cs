@@ -2,7 +2,9 @@ using Clean.App.Services;
 using Clean.App.ViewModels;
 using Clean.Core.Interfaces;
 using Clean.Core.Rules;
+using Clean.Core.Safety;
 using Clean.Core.Scanning;
+using Clean.Infrastructure.Cleaning;
 using Clean.Infrastructure.FileSystem;
 using Clean.Infrastructure.Rules;
 using Clean.Infrastructure.Scanning;
@@ -28,6 +30,20 @@ public partial class App : Application
     {
         _mainWindow = Services.GetRequiredService<MainWindow>();
         _mainWindow.Activate();
+        FreeExpiredArchives();
+    }
+
+    // Past the restore period, archived files only take space: it is handed back to the disk at startup.
+    private static async void FreeExpiredArchives()
+    {
+        try
+        {
+            await Services.GetRequiredService<ICleaningArchive>().FreeExpiredAsync(CancellationToken.None);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            Services.GetRequiredService<ILogger<App>>().LogError(exception, "Could not free the expired archives");
+        }
     }
 
     private static ServiceProvider ConfigureServices()
@@ -54,9 +70,18 @@ public partial class App : Application
             provider.GetRequiredService<ILogger<KnownLocationScanner>>()));
         services.AddSingleton<IScanManager, ScanManager>();
 
+        services.AddSingleton<IPathValidator>(provider => new RulePathValidator(provider.GetRequiredService<IRuleEngine>()));
+        services.AddSingleton<ISafetyEngine, SafetyEngine>();
+        services.AddSingleton<ICleaningArchive>(provider => new CleaningArchive(
+            CleaningArchive.DefaultFolder,
+            provider.GetRequiredService<TimeProvider>(),
+            provider.GetRequiredService<ILogger<CleaningArchive>>()));
+        services.AddSingleton<ICleaner, FileCleaner>();
+
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<StorageViewModel>();
         services.AddSingleton<CleanerViewModel>();
+        services.AddSingleton<HistoryViewModel>();
         services.AddSingleton<MainWindow>();
 
         return services.BuildServiceProvider();

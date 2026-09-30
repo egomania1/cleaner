@@ -4,5 +4,8 @@ namespace Clean.Core.Interfaces;
 
 public interface ICleaner
 {
-    Task<long> CleanAsync(IReadOnlyList<CleaningDecision> decisions, CancellationToken cancellationToken);
+    Task<CleaningResult> CleanAsync(
+        IReadOnlyList<CleaningDecision> decisions,
+        IProgress<CleaningProgress>? progress,
+        CancellationToken cancellationToken);
 }

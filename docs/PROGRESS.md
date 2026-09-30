@@ -18,7 +18,7 @@ Last update: 2026-09-30. Branch: `winui`. The original Electron app is still on 
 src/Clean.Core            models, interfaces, rules, formatting, location/app knowledge (no Windows dependency)
 src/Clean.Infrastructure  disks, file system walks, registry, Explorer, scanners
 src/Clean.App             WinUI 3 UI: Views, ViewModels, Controls, Themes, Converters, Services
-tests/Clean.Tests         xUnit tests (156 passing)
+tests/Clean.Tests         xUnit tests (187 passing)
 ```
 
 ## Phases (from the DeepClean master prompt, app name kept as "Clean")
@@ -42,6 +42,8 @@ tests/Clean.Tests         xUnit tests (156 passing)
 - `LocationCatalog` (Windows, Users, Program Files, Steam/Epic/Xbox/Riot, dev folders) and `AppCatalog` (~70 common apps and games) explain what things are. Everything stays offline.
 - Shiny analyze button (rotating border light), rectangular buttons (user dislikes round pills), wider pages (1600px).
 - Nettoyage page: disk picker (system drive by default); scanners take the drive root and ignore rule folders on other drives. Current rules only target the system drive, so other drives show an explanatory "nothing found" card. Idea: drive-level rules (recycle bin, game shader caches on any drive). The disk list is read once per session (a USB drive plugged in later needs a restart).
+- Real cleaning on the Nettoyage page (2026-09-30), simulation mode removed: checkbox per location (safe ones ticked by default; "Éléments sûrs / Tout / Aucun"), "Nettoyer X" button, confirmation dialog ("Annuler" is the default button, caution/expert items and refused items listed), live progress with "Arrêter", "RETIRÉ" result card (locked files, files kept because they changed since the scan, "Voir l'historique"). Safety chain: `RulePathValidator` (only the exact folder of a loaded rule, never a drive root) → `SafetyEngine` (rule id and risk must still match) → `FileCleaner` re-checks every decision, re-applies the minimum age at cleaning time, never follows links, removes only empty subfolders created before the cutoff, never the rule folder itself. `%WINDIR%\Temp` mostly needs admin rights: those files are counted as "gardés".
+- History and restore (2026-09-30, user request): `FileCleaner` moves files into `CleaningArchive` (`%LOCALAPPDATA%\Clean\Archive`: `history.json` + `sessions\<id>\<location index>\<relative path>`) instead of deleting them. Each cleaning is a `CleaningSession`, restorable for 7 days (`CleaningSession.RetentionPeriod`); expired sessions are freed at startup. Historique page (08): "RESTAURABLE" / "LIBÉRÉ" totals, one card per cleaning with "Restaurer" and "Libérer maintenant" (confirmed). Restore keeps a file the app recreated meanwhile (conflict), keeps the session restorable if a file could not go back. Trade-off: the disk space only comes back when the archive is freed. Unreadable history is copied to `history.json.broken`.
 - Fixed: layout shifting while scanning, disks listed twice, row clicks not opening the card, installers registered on a whole drive.
 
 ## User preferences
