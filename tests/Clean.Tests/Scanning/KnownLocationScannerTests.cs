@@ -96,9 +96,18 @@ public sealed class KnownLocationScannerTests : IDisposable
         Assert.Single(await ScanAsync(rule));
     }
 
-    private static Task<IReadOnlyList<ScanItem>> ScanAsync(CleaningRule rule) =>
+    [Fact]
+    public async Task ScanAsync_IgnoresRuleFoldersOnOtherDrives()
+    {
+        File.SetLastWriteTimeUtc(_cache.CreateFile("a.tmp", 10), OldDate);
+        var otherDrive = Path.GetPathRoot(_cache.RootPath)!.StartsWith('Z') ? @"Y:\" : @"Z:\";
+
+        Assert.Empty(await ScanAsync(Rule(), otherDrive));
+    }
+
+    private Task<IReadOnlyList<ScanItem>> ScanAsync(CleaningRule rule, string? driveRoot = null) =>
         new KnownLocationScanner([rule], TimeProvider.System, NullLogger<KnownLocationScanner>.Instance)
-            .ScanAsync(null, CancellationToken.None);
+            .ScanAsync(driveRoot ?? Path.GetPathRoot(_cache.RootPath)!, null, CancellationToken.None);
 
     private CleaningRule Rule(int minimumAgeDays = 0, RiskLevel risk = RiskLevel.Safe) =>
         new("TEST_CACHE", "Test cache", "Rebuilt automatically.", CleaningCategory.ApplicationCache, risk,

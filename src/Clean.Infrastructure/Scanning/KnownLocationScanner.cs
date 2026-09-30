@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Clean.Infrastructure.Scanning;
 
-// Read-only: measures the folders named by the rules and reports what a cleanup would remove.
+// Read-only: measures the folders named by the rules on one drive and reports what a cleanup would remove.
 public sealed class KnownLocationScanner(
     IReadOnlyList<CleaningRule> rules,
     TimeProvider clock,
@@ -22,10 +22,10 @@ public sealed class KnownLocationScanner(
 
     public string Name => "Emplacements connus";
 
-    public Task<IReadOnlyList<ScanItem>> ScanAsync(IProgress<ScanProgress>? progress, CancellationToken cancellationToken) =>
-        Task.Run(() => Scan(progress, cancellationToken), cancellationToken);
+    public Task<IReadOnlyList<ScanItem>> ScanAsync(string driveRoot, IProgress<ScanProgress>? progress, CancellationToken cancellationToken) =>
+        Task.Run(() => Scan(driveRoot, progress, cancellationToken), cancellationToken);
 
-    private IReadOnlyList<ScanItem> Scan(IProgress<ScanProgress>? progress, CancellationToken cancellationToken)
+    private IReadOnlyList<ScanItem> Scan(string driveRoot, IProgress<ScanProgress>? progress, CancellationToken cancellationToken)
     {
         var tracker = new ScanProgressTracker(progress, Name);
         var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -38,7 +38,7 @@ public sealed class KnownLocationScanner(
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var folder = Resolve(rawPath);
-                if (folder is null || !visited.Add(Path.TrimEndingDirectorySeparator(folder.FullName)))
+                if (folder is null || !IsOnDrive(folder, driveRoot) || !visited.Add(Path.TrimEndingDirectorySeparator(folder.FullName)))
                 {
                     continue;
                 }
@@ -54,6 +54,9 @@ public sealed class KnownLocationScanner(
         tracker.Report();
         return items;
     }
+
+    private static bool IsOnDrive(DirectoryInfo folder, string driveRoot) =>
+        string.Equals(Path.TrimEndingDirectorySeparator(folder.Root.FullName), Path.TrimEndingDirectorySeparator(driveRoot), StringComparison.OrdinalIgnoreCase);
 
     private DirectoryInfo? Resolve(string rawPath)
     {

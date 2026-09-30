@@ -11,8 +11,11 @@
     <Grid x:Name="RootGrid" Loaded="OnRootLoaded">
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+
+        <controls:LineStrands Grid.RowSpan="3" Opacity="0.7" />
 
         <StackPanel
             x:Name="AppTitleBar"
@@ -30,68 +33,17 @@
                 Text="Clean" />
         </StackPanel>
 
-        <NavigationView
-            x:Name="Navigation"
+        <controls:GlassNavBar
+            x:Name="NavBar"
             Grid.Row="1"
-            IsBackButtonVisible="Collapsed"
-            IsPaneToggleButtonVisible="False"
-            OpenPaneLength="220"
-            PaneDisplayMode="Left"
-            SelectionChanged="OnNavigationSelectionChanged">
-            <NavigationView.MenuItems>
-                <NavigationViewItem x:Name="DashboardItem" Content="Tableau de bord" Tag="dashboard">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE80F;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem Content="Nettoyage" Tag="cleaner">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE74D;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem Content="Stockage" Tag="storage">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xEDA2;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem Content="Applications" Tag="apps">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE71D;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem Content="Doublons" Tag="duplicates">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE8C8;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem Content="Gros fichiers" Tag="large-files">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE8A5;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem Content="Développeur" Tag="developer">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE943;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem Content="Historique" Tag="history">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE81C;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem Content="Démarrage" Tag="startup">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE7E8;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-            </NavigationView.MenuItems>
+            Margin="16,0,16,12"
+            HorizontalAlignment="Center" />
 
-            <Frame x:Name="ContentFrame" />
-        </NavigationView>
+        <Frame x:Name="ContentFrame" Grid.Row="2" />
 
         <controls:LoadingOverlay
             x:Name="StartupOverlay"
-            Grid.RowSpan="2"
-            Message="Préparation de l'application…" />
+            Grid.RowSpan="3"
+            Message="PRÉPARATION" />
     </Grid>
 </Window>

@@ -5,7 +5,10 @@
     xmlns:controls="using:Clean.App.Controls">
 
     <Grid Background="{StaticResource OverlayBackgroundBrush}">
+        <controls:LineStrands />
+
         <StackPanel
+            Width="360"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Spacing="28">
@@ -18,15 +21,39 @@
                 <controls:LumaSpin Width="44" Height="44" StartStep="2" />
             </StackPanel>
 
-            <StackPanel HorizontalAlignment="Center" Spacing="4">
+            <StackPanel Spacing="14">
                 <TextBlock
                     HorizontalAlignment="Center"
-                    Style="{StaticResource PageTitleTextStyle}"
-                    Text="Clean" />
-                <TextBlock
-                    HorizontalAlignment="Center"
-                    Style="{StaticResource MutedTextStyle}"
-                    Text="{x:Bind Message, Mode=OneWay}" />
+                    CharacterSpacing="40"
+                    FontFamily="Bahnschrift"
+                    FontSize="56"
+                    FontStretch="Condensed"
+                    FontWeight="Bold"
+                    Text="CLEAN" />
+
+                <Grid Height="1" Background="{StaticResource SegmentEmptyBrush}">
+                    <Rectangle Fill="{StaticResource SegmentFilledBrush}" RenderTransformOrigin="0,0.5">
+                        <Rectangle.RenderTransform>
+                            <ScaleTransform x:Name="FillScale" ScaleX="0" />
+                        </Rectangle.RenderTransform>
+                    </Rectangle>
+                </Grid>
+
+                <Grid>
+                    <TextBlock
+                        CharacterSpacing="160"
+                        FontSize="11"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource MutedTextBrush}"
+                        Text="{x:Bind Message, Mode=OneWay}" />
+                    <TextBlock
+                        x:Name="PercentText"
+                        HorizontalAlignment="Right"
+                        CharacterSpacing="160"
+                        FontSize="11"
+                        FontWeight="SemiBold"
+                        Text="0 %" />
+                </Grid>
             </StackPanel>
         </StackPanel>
     </Grid>

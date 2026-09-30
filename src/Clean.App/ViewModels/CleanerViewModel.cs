@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Input;
 using Clean.Core.Formatting;
@@ -15,8 +16,13 @@ public sealed class CleanerViewModel : ObservableObject
     private static readonly CultureInfo French = CultureInfo.GetCultureInfo("fr-FR");
 
     private readonly IScanManager _scanManager;
+    private readonly IDiskService _diskService;
     private readonly ILogger<CleanerViewModel> _logger;
 
+    private Task? _disksLoading;
+    private int _selectedDiskIndex = -1;
+    private string _resultDiskName = string.Empty;
+    private bool _resultIsSystemDrive;
     private StorageViewState _state = StorageViewState.Idle;
     private string _filesScannedText = "0";
     private string _dataAnalyzedText = ByteSize.Format(0);
@@ -25,17 +31,34 @@ public sealed class CleanerViewModel : ObservableObject
     private ScanResult _result = ScanResult.Empty;
     private IReadOnlyList<ScanItemRow> _items = [];
 
-    public CleanerViewModel(IScanManager scanManager, ILogger<CleanerViewModel> logger)
+    public CleanerViewModel(IScanManager scanManager, IDiskService diskService, ILogger<CleanerViewModel> logger)
     {
         _scanManager = scanManager;
+        _diskService = diskService;
         _logger = logger;
-        AnalyzeCommand = new AsyncRelayCommand(AnalyzeAsync);
+        AnalyzeCommand = new AsyncRelayCommand(AnalyzeAsync, () => SelectedDisk is not null);
         CancelCommand = AnalyzeCommand.CreateCancelCommand();
     }
 
     public IAsyncRelayCommand AnalyzeCommand { get; }
 
     public ICommand CancelCommand { get; }
+
+    public ObservableCollection<DiskItemViewModel> Disks { get; } = [];
+
+    public int SelectedDiskIndex
+    {
+        get => _selectedDiskIndex;
+        set
+        {
+            if (SetProperty(ref _selectedDiskIndex, value))
+            {
+                AnalyzeCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
+    public bool CanChangeDisk => !IsScanning;
 
     public bool IsIdle => _state == StorageViewState.Idle;
 
@@ -84,14 +107,50 @@ public sealed class CleanerViewModel : ObservableObject
     public string CleanableText => ByteSize.Format(_result.CleanableBytes);
 
     public string CleanableSummary =>
-        $"{_result.CleanableFileCount.ToString("N0", French)} fichiers dans {_result.Items.Count(item => item.CanClean)} emplacements, analysés en {_result.Duration.TotalSeconds.ToString("0.#", French)} s";
+        $"{_resultDiskName} — {_result.CleanableFileCount.ToString("N0", French)} fichiers dans {_result.Items.Count(item => item.CanClean)} emplacements, analysés en {_result.Duration.TotalSeconds.ToString("0.#", French)} s";
+
+    // The rules only know Windows, user profile and developer folders for now, and those live on the system drive.
+    public bool HasNothingFound => HasResult && _result.Items.Count == 0;
+
+    public string NothingFoundText => _resultIsSystemDrive
+        ? $"Rien à nettoyer sur {_resultDiskName} pour l'instant."
+        : $"Rien trouvé sur {_resultDiskName}. Les règles actuelles visent surtout des dossiers de Windows et de ton compte, qui sont sur le disque système.";
 
     public string DashboardValue => HasResult ? CleanableText : "—";
 
     public string DashboardCaption => HasResult ? "Estimation, rien n'a été supprimé" : "Pas encore analysé";
 
+    private DiskItemViewModel? SelectedDisk =>
+        SelectedDiskIndex >= 0 && SelectedDiskIndex < Disks.Count ? Disks[SelectedDiskIndex] : null;
+
+    public Task EnsureDisksLoadedAsync() => _disksLoading ??= LoadDisksAsync();
+
+    private async Task LoadDisksAsync()
+    {
+        try
+        {
+            foreach (var disk in await _diskService.GetDisksAsync(CancellationToken.None))
+            {
+                Disks.Add(new DiskItemViewModel(disk));
+            }
+
+            var systemDisk = Disks.FirstOrDefault(disk => disk.IsSystemDrive);
+            SelectedDiskIndex = systemDisk is not null ? Disks.IndexOf(systemDisk) : Disks.Count > 0 ? 0 : -1;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogError(exception, "Could not list the disks");
+            StatusMessage = "Impossible de lister les disques.";
+        }
+    }
+
     private async Task AnalyzeAsync(CancellationToken cancellationToken)
     {
+        if (SelectedDisk is not { } selected)
+        {
+            return;
+        }
+
         StatusMessage = null;
         FilesScannedText = "0";
         DataAnalyzedText = ByteSize.Format(0);
@@ -101,7 +160,9 @@ public sealed class CleanerViewModel : ObservableObject
         var progress = new Progress<ScanProgress>(ShowProgress);
         try
         {
-            _result = await _scanManager.RunAsync(progress, cancellationToken);
+            _result = await _scanManager.RunAsync(selected.Disk.RootPath, progress, cancellationToken);
+            _resultDiskName = selected.Name;
+            _resultIsSystemDrive = selected.IsSystemDrive;
             Items = _result.Items.OrderByDescending(item => item.SizeBytes).Select(item => new ScanItemRow(item)).ToList();
 
             if (_result.Errors.Count > 0)
@@ -142,6 +203,9 @@ public sealed class CleanerViewModel : ObservableObject
         OnPropertyChanged(nameof(IsIdle));
         OnPropertyChanged(nameof(IsScanning));
         OnPropertyChanged(nameof(HasResult));
+        OnPropertyChanged(nameof(CanChangeDisk));
+        OnPropertyChanged(nameof(HasNothingFound));
+        OnPropertyChanged(nameof(NothingFoundText));
         OnPropertyChanged(nameof(CleanableText));
         OnPropertyChanged(nameof(CleanableSummary));
         OnPropertyChanged(nameof(DashboardValue));

@@ -15,7 +15,7 @@ public class ScanManagerTests
             new FakeScanner("browser", TestItems.Create(sizeBytes: 200), TestItems.Create(sizeBytes: 300)),
         ]);
 
-        var result = await manager.RunAsync(null, CancellationToken.None);
+        var result = await manager.RunAsync(@"C:\", null, CancellationToken.None);
 
         Assert.Equal(3, result.Items.Count);
         Assert.Equal(600, result.TotalBytes);
@@ -31,7 +31,7 @@ public class ScanManagerTests
             new FakeScanner("temp", TestItems.Create(sizeBytes: 100)),
         ]);
 
-        var result = await manager.RunAsync(null, CancellationToken.None);
+        var result = await manager.RunAsync(@"C:\", null, CancellationToken.None);
 
         Assert.Single(result.Items);
         var error = Assert.Single(result.Errors);
@@ -45,7 +45,7 @@ public class ScanManagerTests
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => manager.RunAsync(null, cancellation.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => manager.RunAsync(@"C:\", null, cancellation.Token));
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class ScanManagerTests
         var manager = new ScanManager([new FakeScanner("temp", TestItems.Create())]);
         var progress = new SynchronousProgress<ScanProgress>();
 
-        await manager.RunAsync(progress, CancellationToken.None);
+        await manager.RunAsync(@"C:\", progress, CancellationToken.None);
 
         Assert.Contains(progress.Reports, report => report.CurrentScanner == "temp");
     }
@@ -65,7 +65,7 @@ public class ScanManagerTests
 
         public string Name => id;
 
-        public Task<IReadOnlyList<ScanItem>> ScanAsync(IProgress<ScanProgress>? progress, CancellationToken cancellationToken)
+        public Task<IReadOnlyList<ScanItem>> ScanAsync(string driveRoot, IProgress<ScanProgress>? progress, CancellationToken cancellationToken)
         {
             progress?.Report(new ScanProgress(id, string.Empty, items.Length, 0, 0, TimeSpan.Zero));
             return Task.FromResult<IReadOnlyList<ScanItem>>(items);
@@ -78,7 +78,7 @@ public class ScanManagerTests
 
         public string Name => id;
 
-        public Task<IReadOnlyList<ScanItem>> ScanAsync(IProgress<ScanProgress>? progress, CancellationToken cancellationToken) =>
+        public Task<IReadOnlyList<ScanItem>> ScanAsync(string driveRoot, IProgress<ScanProgress>? progress, CancellationToken cancellationToken) =>
             throw new IOException("Disk unavailable");
     }
 }

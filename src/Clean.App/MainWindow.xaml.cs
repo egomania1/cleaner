@@ -1,4 +1,5 @@
 using Clean.App.Services;
+using Clean.App.Controls;
 using Clean.App.ViewModels;
 using Clean.App.Views;
 using Microsoft.UI;
@@ -22,14 +23,28 @@ public sealed partial class MainWindow : Window
 
     private static readonly Dictionary<string, PlaceholderContent> UpcomingPages = new()
     {
-        ["apps"] = new("Applications", "L'espace utilisé par chaque application, séparé entre cache nettoyable et données protégées."),
-        ["duplicates"] = new("Doublons", "Les fichiers identiques présents à plusieurs endroits."),
-        ["large-files"] = new("Gros fichiers", "Les fichiers les plus volumineux, à trier toi-même."),
-        ["developer"] = new("Développeur", "Les dossiers node_modules, bin/obj et les caches npm, NuGet ou pip."),
-        ["history"] = new("Historique", "L'évolution de l'espace utilisé au fil du temps."),
-        ["startup"] = new("Démarrage", "Les applications lancées au démarrage de Windows."),
-        ["settings"] = new("Paramètres", "Thème, options d'analyse, exclusions et confidentialité."),
+        ["apps"] = new("04", "Applications", "L'espace utilisé par chaque application, séparé entre cache nettoyable et données protégées."),
+        ["duplicates"] = new("05", "Doublons", "Les fichiers identiques présents à plusieurs endroits."),
+        ["large-files"] = new("06", "Gros fichiers", "Les fichiers les plus volumineux, à trier toi-même."),
+        ["developer"] = new("07", "Développeur", "Les dossiers node_modules, bin/obj et les caches npm, NuGet ou pip."),
+        ["history"] = new("08", "Historique", "L'évolution de l'espace utilisé au fil du temps."),
+        ["startup"] = new("09", "Démarrage", "Les applications lancées au démarrage de Windows."),
+        ["settings"] = new("10", "Paramètres", "Thème, options d'analyse, exclusions et confidentialité."),
     };
+
+    private static readonly NavItem[] NavItems =
+    [
+        new("dashboard", "Tableau de bord", "\uE80F"),
+        new("cleaner", "Nettoyage", "\uE74D"),
+        new("storage", "Stockage", "\uEDA2"),
+        new("apps", "Applications", "\uE71D"),
+        new("duplicates", "Doublons", "\uE8C8"),
+        new("large-files", "Gros fichiers", "\uE8A5"),
+        new("developer", "Développeur", "\uE943"),
+        new("history", "Historique", "\uE81C"),
+        new("startup", "Démarrage", "\uE7E8"),
+        new("settings", "Paramètres", "\uE713", StartsGroup: true),
+    ];
 
     private readonly DashboardViewModel _dashboard;
 
@@ -38,8 +53,10 @@ public sealed partial class MainWindow : Window
         _dashboard = dashboard;
         InitializeComponent();
         ConfigureWindow();
-        navigation.NavigationRequested += SelectPage;
-        Navigation.SelectedItem = DashboardItem;
+        NavBar.SetItems(NavItems);
+        NavBar.Selected += ShowPage;
+        navigation.NavigationRequested += NavBar.Select;
+        NavBar.Select("dashboard");
     }
 
     private void ConfigureWindow()
@@ -62,25 +79,13 @@ public sealed partial class MainWindow : Window
     private async void OnRootLoaded(object sender, RoutedEventArgs e)
     {
         await Task.WhenAll(_dashboard.LoadAsync(CancellationToken.None), Task.Delay(MinimumSplashDuration));
+        await StartupOverlay.CompleteAsync();
         await StartupOverlay.FadeOutAsync();
         RootGrid.Children.Remove(StartupOverlay);
     }
 
-    private void SelectPage(string pageTag)
+    private void ShowPage(string tag)
     {
-        Navigation.SelectedItem = Navigation.MenuItems
-            .OfType<NavigationViewItem>()
-            .FirstOrDefault(item => item.Tag as string == pageTag);
-    }
-
-    private void OnNavigationSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
-    {
-        var tag = args.IsSettingsSelected ? "settings" : args.SelectedItemContainer?.Tag as string;
-        if (tag is null)
-        {
-            return;
-        }
-
         if (Pages.TryGetValue(tag, out var pageType))
         {
             ContentFrame.Navigate(pageType);

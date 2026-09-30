@@ -17,7 +17,7 @@
             <StackPanel Grid.Column="1" Spacing="16">
 
                 <StackPanel Spacing="4">
-                    <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Stockage" />
+                    <controls:PageTitle Index="03" Text="Stockage" />
                     <TextBlock Style="{StaticResource MutedTextStyle}" Text="Ce qui occupe la place sur tes disques." />
                 </StackPanel>
 
@@ -148,8 +148,9 @@
                                     Tag="{x:Bind Usage}">
                                     <Grid>
                                         <TextBlock Text="{x:Bind Label}" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock
+                                        <controls:AnimatedText
                                             HorizontalAlignment="Right"
+                                            Effect="Decrypt"
                                             FontWeight="Bold"
                                             Text="{x:Bind SizeText}" />
                                     </Grid>

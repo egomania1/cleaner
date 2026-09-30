@@ -17,7 +17,7 @@
             <StackPanel Grid.Column="1" Spacing="16">
 
                 <StackPanel Spacing="4">
-                    <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Tableau de bord" />
+                    <controls:PageTitle Index="01" Text="Tableau de bord" />
                     <TextBlock Style="{StaticResource MutedTextStyle}" Text="Comprends ton stockage. Nettoie ce qui compte." />
                 </StackPanel>
 
@@ -56,8 +56,9 @@
                                             </StackPanel>
 
                                             <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                <TextBlock
+                                                <controls:AnimatedText
                                                     HorizontalAlignment="Right"
+                                                    Effect="Decrypt"
                                                     FontWeight="SemiBold"
                                                     Text="{x:Bind UsageText}" />
                                                 <TextBlock

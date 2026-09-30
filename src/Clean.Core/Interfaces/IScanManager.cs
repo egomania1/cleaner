@@ -6,5 +6,5 @@ public interface IScanManager
 {
     IReadOnlyList<IScanner> Scanners { get; }
 
-    Task<ScanResult> RunAsync(IProgress<ScanProgress>? progress, CancellationToken cancellationToken);
+    Task<ScanResult> RunAsync(string driveRoot, IProgress<ScanProgress>? progress, CancellationToken cancellationToken);
 }

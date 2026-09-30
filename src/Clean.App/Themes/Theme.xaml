@@ -3,16 +3,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Clean.App.Controls">
 
-    <ResourceDictionary.ThemeDictionaries>
-        <ResourceDictionary x:Key="Default">
-            <!-- Let the acrylic window backdrop show through the navigation pane and content. -->
-            <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="Transparent" />
-            <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="Transparent" />
-            <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
-            <SolidColorBrush x:Key="NavigationViewContentGridBorderBrush" Color="Transparent" />
-        </ResourceDictionary>
-    </ResourceDictionary.ThemeDictionaries>
-
     <SolidColorBrush x:Key="CardBackgroundBrush" Color="#0DFFFFFF" />
     <SolidColorBrush x:Key="CardBorderBrush" Color="#1AFFFFFF" />
     <SolidColorBrush x:Key="PrimaryTextBrush" Color="#FAFAFA" />
@@ -21,6 +11,9 @@
     <SolidColorBrush x:Key="LoaderStrokeBrush" Color="#F3F4F6" />
     <SolidColorBrush x:Key="SegmentFilledBrush" Color="#FAFAFA" />
     <SolidColorBrush x:Key="SegmentEmptyBrush" Color="#1FFFFFFF" />
+
+    <SolidColorBrush x:Key="NavGlassBrush" Color="#B01A1A1A" />
+    <SolidColorBrush x:Key="NavIndicatorBrush" Color="#1FFFFFFF" />
 
     <SolidColorBrush x:Key="SafeBrush" Color="#34D399" />
     <SolidColorBrush x:Key="CautionBrush" Color="#FBBF24" />
@@ -277,6 +270,41 @@
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
                     </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Tabs of the glass navigation bar: no surface of their own, the sliding indicator marks the selection. -->
+    <Style x:Key="NavTabButtonStyle" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
+        <Setter Property="Padding" Value="14,9" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border
+                        x:Name="Surface"
+                        Padding="{TemplateBinding Padding}"
+                        Background="Transparent"
+                        CornerRadius="6">
+                        <ContentPresenter Content="{TemplateBinding Content}" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Surface.Background" Value="#0FFFFFFF" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Surface.Background" Value="#08FFFFFF" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

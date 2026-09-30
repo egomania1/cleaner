@@ -8,7 +8,7 @@ public sealed class ScanManager(IEnumerable<IScanner> scanners) : IScanManager
 {
     public IReadOnlyList<IScanner> Scanners { get; } = scanners.ToList();
 
-    public async Task<ScanResult> RunAsync(IProgress<ScanProgress>? progress, CancellationToken cancellationToken)
+    public async Task<ScanResult> RunAsync(string driveRoot, IProgress<ScanProgress>? progress, CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
         var items = new List<ScanItem>();
@@ -20,7 +20,7 @@ public sealed class ScanManager(IEnumerable<IScanner> scanners) : IScanManager
 
             try
             {
-                items.AddRange(await scanner.ScanAsync(progress, cancellationToken));
+                items.AddRange(await scanner.ScanAsync(driveRoot, progress, cancellationToken));
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {

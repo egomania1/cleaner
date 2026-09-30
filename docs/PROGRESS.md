@@ -1,6 +1,6 @@
 # Clean — where we are
 
-Last update: 2026-09-29. Branch: `winui`. The original Electron app is still on `main`.
+Last update: 2026-09-30. Branch: `winui`. The original Electron app is still on `main`.
 
 ## How to work on it
 
@@ -18,7 +18,7 @@ Last update: 2026-09-29. Branch: `winui`. The original Electron app is still on 
 src/Clean.Core            models, interfaces, rules, formatting, location/app knowledge (no Windows dependency)
 src/Clean.Infrastructure  disks, file system walks, registry, Explorer, scanners
 src/Clean.App             WinUI 3 UI: Views, ViewModels, Controls, Themes, Converters, Services
-tests/Clean.Tests         xUnit tests (106 passing)
+tests/Clean.Tests         xUnit tests (156 passing)
 ```
 
 ## Phases (from the DeepClean master prompt, app name kept as "Clean")
@@ -31,8 +31,9 @@ tests/Clean.Tests         xUnit tests (106 passing)
 | 3 Disk service | done | real disks on the dashboard |
 | 4 Scan engine | done | ScanManager, StorageAnalyzer, Stockage page with SegmentedProgress + PolarChart |
 | 5 Dry run | done | KnownLocationScanner + BuiltInRules (C#), Nettoyage page, dashboard "Nettoyable" card |
-| 6 Rule engine (JSON) | **next** | move `Core/Rules/BuiltInRules.cs` to JSON files, validate, expand env vars |
-| 7 – 38 | todo | see the master prompt |
+| 6 Rule engine (JSON) | done | `Infrastructure/Rules/Definitions/*.json` copied to `Rules/` next to the exe; `JsonRuleLoader` skips and logs broken or unsafe rules; `RuleValidator` (id, texts, risk, env-var-only paths, protected folders); `RuleEngine.FindRuleFor` |
+| 7 | **next** | see the master prompt |
+| 8 – 38 | todo | see the master prompt |
 
 ## Extra work done on request (outside the phase order)
 
@@ -40,6 +41,7 @@ tests/Clean.Tests         xUnit tests (106 passing)
 - Detail card shows real data for any entry on any drive: owning application (registry or .exe metadata), file/folder counts, composition, last activity, creation date, clickable subfolders with a back button.
 - `LocationCatalog` (Windows, Users, Program Files, Steam/Epic/Xbox/Riot, dev folders) and `AppCatalog` (~70 common apps and games) explain what things are. Everything stays offline.
 - Shiny analyze button (rotating border light), rectangular buttons (user dislikes round pills), wider pages (1600px).
+- Nettoyage page: disk picker (system drive by default); scanners take the drive root and ignore rule folders on other drives. Current rules only target the system drive, so other drives show an explanatory "nothing found" card. Idea: drive-level rules (recycle bin, game shader caches on any drive). The disk list is read once per session (a USB drive plugged in later needs a restart).
 - Fixed: layout shifting while scanning, disks listed twice, row clicks not opening the card, installers registered on a whole drive.
 
 ## User preferences
@@ -48,16 +50,14 @@ tests/Clean.Tests         xUnit tests (106 passing)
 - App must stay 100 % local (planned public download website later: needs self-contained publish, code signing or Store, installer).
 - Wants full explanations for every file and application, on every drive.
 
-## Pending: design inspiration pass
+## Design pass (done 2026-09-30)
 
-The user shared these sites to borrow animations, text effects and design ideas from:
-composites.archi, 21st.dev/community/themes, reactbits.dev, toptier.relats.com, roiheads.com, awwwards.com sites of the month.
+Inspiration: composites.archi, toptier.relats.com, roiheads.com, reactbits.dev.
 
-Notes taken so far (not implemented yet):
-- composites.archi: huge uppercase typography, intro loader with a % counter and a thin line, fine animated line strands in the background, tiny uppercase corner labels, dark grey palette.
-- toptier.relats.com: floating glass pill navigation with a two-tab segmented switch, text revealed word by word on scroll, large centered hero title.
-- roiheads.com: condensed massive bold type, purple/yellow accents, 3D letters, numbers that "decrypt" (symbols ~ # % & X scramble before the real value) — good fit for sizes like "2,5 Go".
-- reactbits.dev text effects that translate well to WinUI: Split Text, Blur Text, Decrypted/Scrambled Text, Shiny Text, Gradient Text, Scroll Reveal, Count Up.
-- Not reviewed yet: 21st.dev themes, awwwards sites of the month.
-
-Next step for design: propose a short list of effects to the user, then implement after approval.
+- `PageTitle`: huge condensed uppercase title (Bahnschrift, 60px) with a tiny "NN  /  CLEAN" label; words rise one by one, then a blue-violet light band (`TextShine`) sweeps across every ~5 s.
+- `AnimatedText`: count up (dashboard stat cards, Nettoyage "RÉCUPÉRABLE" + shine) and decrypt (sizes on dashboard, Nettoyage, Stockage, detail card). Frame logic lives in `Core/Formatting/TextEffects.cs` (tested). Only for final values, never live progress.
+- `LineStrands`: two ribbons of thin lines drawn once over 2x the width with a periodic wave, slid by a compositor animation (idle CPU 4 % vs 2.7 % before, most of it the ShinyButton spin).
+- Startup loader: LumaSpin x3 kept, plus "CLEAN" title, thin fill line and a time-paced 0-100 % counter (`CompleteAsync` before the fade).
+- `GlassNavBar` replaces the NavigationView: floating glass bar centered at the top; only the selected tab shows its label (10 labelled tabs do not fit 960px), a glass block slides to it, labels are tooltips otherwise.
+- All animations respect the Windows "animation effects" setting.
+- Not done from the notes: 3D letters (roiheads), word-by-word scroll reveal, 21st.dev themes and awwwards review.

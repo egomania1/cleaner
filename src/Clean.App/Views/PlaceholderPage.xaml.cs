@@ -16,7 +16,8 @@ public sealed partial class PlaceholderPage : Page
 
         if (e.Parameter is PlaceholderContent content)
         {
-            TitleText.Text = content.Title;
+            Header.Index = content.Index;
+            Header.Text = content.Title;
             DescriptionText.Text = content.Description;
         }
     }
