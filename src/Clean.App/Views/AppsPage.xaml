@@ -1,0 +1,652 @@
+<Page
+    x:Class="Clean.App.Views.AppsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Clean.App.Controls"
+    xmlns:viewmodels="using:Clean.App.ViewModels">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled">
+        <!-- The content column grows up to 1600px; the side columns share what is left, which keeps it centered. -->
+        <Grid Padding="32,8,32,32">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="100*" MaxWidth="1600" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="1" Spacing="16">
+                <StackPanel Spacing="4">
+                    <controls:PageTitle Index="04" Text="Applications" />
+                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Ce que tes applications prennent sur le disque, et ce qu'elles consomment en ce moment." />
+                </StackPanel>
+
+                <Grid Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay}">
+                    <StackPanel
+                        Padding="0,40"
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal"
+                        Spacing="14">
+                        <controls:LumaSpin Width="26" Height="26" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Style="{StaticResource MutedTextStyle}"
+                            Text="Lecture des applications installées…" />
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.IsLoaded, Mode=OneWay}">
+
+                    <!-- KPI band: one surface split by hairlines, the numbers carry it. -->
+                    <Border
+                        Padding="0,22"
+                        Background="{StaticResource CardBackgroundBrush}"
+                        BorderBrush="{StaticResource CardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Padding="24,0" Spacing="4">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="INSTALLÉES" />
+                                <controls:AnimatedText
+                                    HorizontalAlignment="Left"
+                                    Effect="CountUp"
+                                    FontFamily="Bahnschrift"
+                                    FontSize="40"
+                                    FontWeight="SemiBold"
+                                    Text="{x:Bind ViewModel.InstalledCountText, Mode=OneWay}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="applications dans Windows" />
+                            </StackPanel>
+
+                            <Rectangle Grid.Column="1" Width="1" Fill="{StaticResource CardBorderBrush}" />
+
+                            <StackPanel Grid.Column="2" Padding="24,0" Spacing="4">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="ESPACE OCCUPÉ" />
+                                <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.TotalSizeText, Mode=OneWay}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.TotalSizeCaption, Mode=OneWay}" />
+                                <ProgressBar
+                                    Margin="0,4,0,0"
+                                    Style="{StaticResource UsageBarStyle}"
+                                    Value="{x:Bind ViewModel.MeasureProgress, Mode=OneWay}"
+                                    Visibility="{x:Bind ViewModel.IsMeasuring, Mode=OneWay}" />
+                            </StackPanel>
+
+                            <Rectangle Grid.Column="3" Width="1" Fill="{StaticResource CardBorderBrush}" />
+
+                            <StackPanel Grid.Column="4" Padding="24,0" Spacing="4">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Ellipse Width="8" Height="8" Fill="{StaticResource SafeBrush}" />
+                                    <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="EN COURS" />
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.RunningCountText, Mode=OneWay}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="programmes lancés, hors Windows" />
+                            </StackPanel>
+
+                            <Rectangle Grid.Column="5" Width="1" Fill="{StaticResource CardBorderBrush}" />
+
+                            <StackPanel Grid.Column="6" Padding="24,0" Spacing="4">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="PROCESSEUR" />
+                                <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.CpuText, Mode=OneWay}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.CpuCaption}" />
+                            </StackPanel>
+
+                            <Rectangle Grid.Column="7" Width="1" Fill="{StaticResource CardBorderBrush}" />
+
+                            <StackPanel Grid.Column="8" Padding="24,0" Spacing="4">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="MÉMOIRE" />
+                                <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.MemoryText, Mode=OneWay}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.MemoryCaption}" />
+                                <ProgressBar
+                                    Margin="0,4,0,0"
+                                    Style="{StaticResource UsageBarStyle}"
+                                    Value="{x:Bind ViewModel.MemoryRatio, Mode=OneWay}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Disk: treemap + ranked categories. -->
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="14">
+                                <Grid>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="OÙ VA LA PLACE" />
+                                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="Chaque bloc est une application, sa surface est sa taille. Clique pour le détail." />
+                                    </StackPanel>
+                                </Grid>
+                                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Groups, Mode=OneWay}">
+                                    <ItemsRepeater.Layout>
+                                        <StackLayout Orientation="Horizontal" Spacing="16" />
+                                    </ItemsRepeater.Layout>
+                                    <ItemsRepeater.ItemTemplate>
+                                        <DataTemplate x:DataType="viewmodels:GroupShareRow">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <Rectangle
+                                                    Width="10"
+                                                    Height="10"
+                                                    VerticalAlignment="Center"
+                                                    Fill="{x:Bind Brush}"
+                                                    RadiusX="2"
+                                                    RadiusY="2" />
+                                                <TextBlock
+                                                    FontSize="12"
+                                                    Foreground="{StaticResource MutedTextBrush}"
+                                                    Text="{x:Bind Label}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsRepeater.ItemTemplate>
+                                </ItemsRepeater>
+                                <controls:TreemapChart
+                                    x:Name="Treemap"
+                                    Height="440"
+                                    SelectedKey="{x:Bind ViewModel.SelectedKey, Mode=OneWay}"
+                                    TileSelected="OnTileSelected"
+                                    Tiles="{x:Bind ViewModel.Tiles, Mode=OneWay}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="18">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="PAR CATÉGORIE" />
+                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Place totale de chaque famille d'applications." />
+                                </StackPanel>
+                                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Groups, Mode=OneWay}">
+                                    <ItemsRepeater.Layout>
+                                        <StackLayout Spacing="18" />
+                                    </ItemsRepeater.Layout>
+                                    <ItemsRepeater.ItemTemplate>
+                                        <DataTemplate x:DataType="viewmodels:GroupShareRow">
+                                            <StackPanel Spacing="6">
+                                                <Grid>
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <Rectangle
+                                                            Width="10"
+                                                            Height="10"
+                                                            VerticalAlignment="Center"
+                                                            Fill="{x:Bind Brush}"
+                                                            RadiusX="2"
+                                                            RadiusY="2" />
+                                                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="{x:Bind Label}" />
+                                                    </StackPanel>
+                                                    <TextBlock
+                                                        HorizontalAlignment="Right"
+                                                        FontSize="14"
+                                                        FontWeight="SemiBold"
+                                                        Text="{x:Bind SizeText}" />
+                                                </Grid>
+                                                <Grid Height="6">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="{x:Bind BarWidth}" />
+                                                        <ColumnDefinition Width="{x:Bind BarRest}" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Grid.ColumnSpan="2" Background="{StaticResource SegmentEmptyBrush}" CornerRadius="3" />
+                                                    <Border Background="{x:Bind Brush}" CornerRadius="3" />
+                                                </Grid>
+                                                <TextBlock FontSize="12" Foreground="{StaticResource MutedTextBrush}" Text="{x:Bind DetailText}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsRepeater.ItemTemplate>
+                                </ItemsRepeater>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Live: two charts, one scale each. -->
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="12">
+                                <Grid>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="PROCESSEUR EN DIRECT" />
+                                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="Part du processeur utilisée par tous les programmes." />
+                                    </StackPanel>
+                                    <TextBlock
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        FontFamily="Bahnschrift"
+                                        FontSize="26"
+                                        FontWeight="SemiBold"
+                                        Text="{x:Bind ViewModel.CpuText, Mode=OneWay}" />
+                                </Grid>
+                                <controls:LiveLineChart
+                                    Height="200"
+                                    Capacity="60"
+                                    IntervalSeconds="1.5"
+                                    Kind="Percent"
+                                    Values="{x:Bind ViewModel.CpuHistory, Mode=OneWay}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="12">
+                                <Grid>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="MÉMOIRE EN DIRECT" />
+                                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="Mémoire vive occupée par tous les programmes." />
+                                    </StackPanel>
+                                    <TextBlock
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        FontFamily="Bahnschrift"
+                                        FontSize="26"
+                                        FontWeight="SemiBold"
+                                        Text="{x:Bind ViewModel.MemoryText, Mode=OneWay}" />
+                                </Grid>
+                                <controls:LiveLineChart
+                                    Height="200"
+                                    Capacity="60"
+                                    IntervalSeconds="1.5"
+                                    Kind="Bytes"
+                                    Maximum="{x:Bind ViewModel.MemoryMaximum}"
+                                    Values="{x:Bind ViewModel.MemoryHistory, Mode=OneWay}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Running apps + detail. -->
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border VerticalAlignment="Top" Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="12">
+                                <Grid>
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="EN COURS" />
+                                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.RunningSortText, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel
+                                        HorizontalAlignment="Right"
+                                        Orientation="Horizontal"
+                                        Spacing="8">
+                                        <Button
+                                            Padding="14,6"
+                                            Command="{x:Bind ViewModel.SortRunningByCpuCommand}"
+                                            Content="Processeur"
+                                            Style="{StaticResource LiquidButtonStyle}" />
+                                        <Button
+                                            Padding="14,6"
+                                            Command="{x:Bind ViewModel.SortRunningByMemoryCommand}"
+                                            Content="Mémoire"
+                                            Style="{StaticResource LiquidButtonStyle}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Padding="14,0" ColumnSpacing="16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="90" />
+                                        <ColumnDefinition Width="120" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource ColumnHeaderStyle}" Text="APPLICATION" />
+                                    <TextBlock Grid.Column="1" Style="{StaticResource ColumnHeaderStyle}" Text="PROCESSEUR" />
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        HorizontalAlignment="Right"
+                                        Style="{StaticResource ColumnHeaderStyle}"
+                                        Text="MÉMOIRE" />
+                                    <TextBlock Grid.Column="3" Style="{StaticResource ColumnHeaderStyle}" Text="TENDANCE CPU" />
+                                </Grid>
+
+                                <ItemsRepeater ItemsSource="{x:Bind ViewModel.RunningApps}">
+                                    <ItemsRepeater.Layout>
+                                        <StackLayout Spacing="6" />
+                                    </ItemsRepeater.Layout>
+                                    <ItemsRepeater.ItemTemplate>
+                                        <DataTemplate x:DataType="viewmodels:AppItem">
+                                            <Button
+                                                AutomationProperties.Name="{x:Bind Name}"
+                                                Click="OnAppClicked"
+                                                Style="{StaticResource CardRowButtonStyle}"
+                                                Tag="{x:Bind Key}">
+                                                <Grid ColumnSpacing="16">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="130" />
+                                                        <ColumnDefinition Width="90" />
+                                                        <ColumnDefinition Width="120" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid VerticalAlignment="Center" ColumnSpacing="10">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Rectangle
+                                                            Width="4"
+                                                            Height="28"
+                                                            Fill="{x:Bind GroupBrush}"
+                                                            RadiusX="2"
+                                                            RadiusY="2" />
+                                                        <StackPanel Grid.Column="1">
+                                                            <TextBlock
+                                                                FontSize="14"
+                                                                FontWeight="SemiBold"
+                                                                Text="{x:Bind Name}"
+                                                                TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock
+                                                                FontSize="11"
+                                                                Foreground="{StaticResource MutedTextBrush}"
+                                                                Text="{x:Bind RunningText, Mode=OneWay}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                    <StackPanel
+                                                        Grid.Column="1"
+                                                        VerticalAlignment="Center"
+                                                        Spacing="4">
+                                                        <TextBlock
+                                                            FontSize="13"
+                                                            FontWeight="SemiBold"
+                                                            Text="{x:Bind CpuText, Mode=OneWay}" />
+                                                        <ProgressBar Style="{StaticResource UsageBarStyle}" Value="{x:Bind CpuBar, Mode=OneWay}" />
+                                                    </StackPanel>
+                                                    <TextBlock
+                                                        Grid.Column="2"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="13"
+                                                        FontWeight="SemiBold"
+                                                        Text="{x:Bind MemoryText, Mode=OneWay}" />
+                                                    <controls:Sparkline
+                                                        Grid.Column="3"
+                                                        Height="28"
+                                                        Capacity="40"
+                                                        Maximum="{x:Bind CpuHistoryMaximum, Mode=OneWay}"
+                                                        Values="{x:Bind CpuHistory, Mode=OneWay}" />
+                                                </Grid>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsRepeater.ItemTemplate>
+                                </ItemsRepeater>
+
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.OtherRunningText, Mode=OneWay}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Detail of the selected application. -->
+                        <Grid Grid.Column="1" VerticalAlignment="Top">
+                            <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.HasNoSelection, Mode=OneWay}">
+                                <StackPanel Padding="0,40" Spacing="8">
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        FontSize="16"
+                                        FontWeight="SemiBold"
+                                        Text="Aucune application choisie" />
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        Style="{StaticResource MutedTextStyle}"
+                                        Text="Clique sur un bloc, une ligne en cours ou une application de la liste."
+                                        TextAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border
+                                Background="{StaticResource CardBackgroundBrush}"
+                                BorderBrush="{StaticResource CardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="12"
+                                Visibility="{x:Bind ViewModel.HasSelection, Mode=OneWay}">
+                                <StackPanel>
+                                    <Grid Height="150">
+                                        <controls:AnimatedGradient CornerRadius="11,11,0,0" Seed="{x:Bind ViewModel.SelectedApp.Name, Mode=OneWay}" />
+                                        <StackPanel
+                                            Padding="24,0,24,20"
+                                            VerticalAlignment="Bottom"
+                                            Spacing="2">
+                                            <TextBlock
+                                                CharacterSpacing="80"
+                                                FontSize="11"
+                                                FontWeight="SemiBold"
+                                                Foreground="White"
+                                                Opacity="0.85"
+                                                Text="{x:Bind ViewModel.SelectedApp.GroupLabel, Mode=OneWay}" />
+                                            <TextBlock
+                                                FontFamily="Bahnschrift"
+                                                FontSize="30"
+                                                FontWeight="SemiBold"
+                                                Foreground="White"
+                                                Text="{x:Bind ViewModel.SelectedApp.Name, Mode=OneWay}"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <StackPanel Padding="24,20,24,24" Spacing="18">
+                                        <Grid ColumnSpacing="16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition />
+                                                <ColumnDefinition />
+                                                <ColumnDefinition />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="SUR LE DISQUE" />
+                                                <TextBlock Style="{StaticResource CardValueTextStyle}" Text="{x:Bind ViewModel.SelectedApp.SizeText, Mode=OneWay}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="2">
+                                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="PROCESSEUR" />
+                                                <TextBlock Style="{StaticResource CardValueTextStyle}" Text="{x:Bind ViewModel.SelectedApp.CpuText, Mode=OneWay}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Spacing="2">
+                                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="MÉMOIRE" />
+                                                <TextBlock Style="{StaticResource CardValueTextStyle}" Text="{x:Bind ViewModel.SelectedApp.MemoryText, Mode=OneWay}" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.SelectedApp.RunningVisibility, Mode=OneWay}">
+                                            <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="PROCESSEUR, DERNIÈRE MINUTE" />
+                                            <controls:LiveLineChart
+                                                Height="130"
+                                                Capacity="40"
+                                                IntervalSeconds="1.5"
+                                                Kind="Percent"
+                                                Values="{x:Bind ViewModel.SelectedApp.CpuHistory, Mode=OneWay}" />
+                                            <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="MÉMOIRE, DERNIÈRE MINUTE" />
+                                            <controls:LiveLineChart
+                                                Height="130"
+                                                Capacity="40"
+                                                IntervalSeconds="1.5"
+                                                Kind="Bytes"
+                                                Maximum="{x:Bind ViewModel.SelectedApp.MemoryHistoryMaximum, Mode=OneWay}"
+                                                Values="{x:Bind ViewModel.SelectedApp.MemoryHistory, Mode=OneWay}" />
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="CE QUE C'EST" />
+                                            <TextBlock
+                                                FontSize="13"
+                                                Text="{x:Bind ViewModel.SelectedApp.Description, Mode=OneWay}"
+                                                TextWrapping="Wrap" />
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="SA PLACE" />
+                                            <TextBlock
+                                                FontSize="13"
+                                                Text="{x:Bind ViewModel.SelectedApp.WhereSpaceGoes, Mode=OneWay}"
+                                                TextWrapping="Wrap" />
+                                            <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.SelectedApp.ShareText, Mode=OneWay}" />
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="3">
+                                            <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="FICHE" />
+                                            <TextBlock FontSize="13" Text="{x:Bind ViewModel.SelectedApp.Publisher, Mode=OneWay}" />
+                                            <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.SelectedApp.VersionText, Mode=OneWay}" />
+                                            <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.SelectedApp.InstalledOnText, Mode=OneWay}" />
+                                            <TextBlock
+                                                IsTextSelectionEnabled="True"
+                                                Style="{StaticResource MutedTextStyle}"
+                                                Text="{x:Bind ViewModel.SelectedApp.LocationText, Mode=OneWay}" />
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Button
+                                                Padding="18,8"
+                                                Command="{x:Bind ViewModel.OpenLocationCommand}"
+                                                Content="Ouvrir le dossier"
+                                                Style="{StaticResource LiquidButtonStyle}" />
+                                            <Button
+                                                Padding="18,8"
+                                                Command="{x:Bind ViewModel.OpenAppsSettingsCommand}"
+                                                Content="Désinstaller dans Windows"
+                                                Style="{StaticResource LiquidButtonStyle}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Full list: also the accessible table view of the treemap. -->
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="14">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="280" />
+                                    <ColumnDefinition Width="200" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="TOUTES LES APPLICATIONS" />
+                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.FilteredCountText, Mode=OneWay}" />
+                                </StackPanel>
+                                <TextBox
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    PlaceholderText="Chercher une application, un éditeur…"
+                                    Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox
+                                    Grid.Column="2"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Center"
+                                    ItemsSource="{x:Bind ViewModel.SortOptions}"
+                                    SelectedIndex="{x:Bind ViewModel.SortIndex, Mode=TwoWay}" />
+                            </Grid>
+
+                            <Grid Padding="14,0" ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="170" />
+                                    <ColumnDefinition Width="220" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource ColumnHeaderStyle}" Text="APPLICATION" />
+                                <TextBlock Grid.Column="1" Style="{StaticResource ColumnHeaderStyle}" Text="CATÉGORIE" />
+                                <TextBlock Grid.Column="2" Style="{StaticResource ColumnHeaderStyle}" Text="ÉTAT" />
+                                <TextBlock Grid.Column="3" Style="{StaticResource ColumnHeaderStyle}" Text="TAILLE" />
+                            </Grid>
+
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.FilteredApps, Mode=OneWay}">
+                                <ItemsRepeater.Layout>
+                                    <StackLayout Spacing="6" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="viewmodels:AppItem">
+                                        <Button
+                                            AutomationProperties.Name="{x:Bind Name}"
+                                            Click="OnAppClicked"
+                                            Style="{StaticResource CardRowButtonStyle}"
+                                            Tag="{x:Bind Key}">
+                                            <Grid ColumnSpacing="16">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="180" />
+                                                    <ColumnDefinition Width="170" />
+                                                    <ColumnDefinition Width="220" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock
+                                                        FontSize="14"
+                                                        FontWeight="SemiBold"
+                                                        Text="{x:Bind Name}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        FontSize="11"
+                                                        Foreground="{StaticResource MutedTextBrush}"
+                                                        Text="{x:Bind Publisher}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                                <StackPanel
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal"
+                                                    Spacing="8">
+                                                    <Rectangle
+                                                        Width="10"
+                                                        Height="10"
+                                                        VerticalAlignment="Center"
+                                                        Fill="{x:Bind GroupBrush}"
+                                                        RadiusX="2"
+                                                        RadiusY="2" />
+                                                    <TextBlock
+                                                        FontSize="12"
+                                                        Foreground="{StaticResource MutedTextBrush}"
+                                                        Text="{x:Bind GroupLabel}" />
+                                                </StackPanel>
+                                                <StackPanel
+                                                    Grid.Column="2"
+                                                    VerticalAlignment="Center"
+                                                    Orientation="Horizontal"
+                                                    Spacing="8">
+                                                    <Ellipse
+                                                        Width="8"
+                                                        Height="8"
+                                                        VerticalAlignment="Center"
+                                                        Fill="{StaticResource SafeBrush}"
+                                                        Visibility="{x:Bind RunningVisibility, Mode=OneWay}" />
+                                                    <TextBlock
+                                                        FontSize="12"
+                                                        Foreground="{StaticResource MutedTextBrush}"
+                                                        Text="{x:Bind RunningText, Mode=OneWay}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                                <StackPanel
+                                                    Grid.Column="3"
+                                                    VerticalAlignment="Center"
+                                                    Spacing="5">
+                                                    <TextBlock
+                                                        HorizontalAlignment="Right"
+                                                        FontSize="13"
+                                                        FontWeight="SemiBold"
+                                                        Text="{x:Bind SizeText, Mode=OneWay}" />
+                                                    <Grid Height="4">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="{x:Bind BarWidth, Mode=OneWay}" />
+                                                            <ColumnDefinition Width="{x:Bind BarRest, Mode=OneWay}" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Grid.ColumnSpan="2" Background="{StaticResource SegmentEmptyBrush}" CornerRadius="2" />
+                                                        <Border Background="{x:Bind GroupBrush}" CornerRadius="2" />
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

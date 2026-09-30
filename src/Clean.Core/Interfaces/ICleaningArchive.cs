@@ -9,7 +9,7 @@ public interface ICleaningArchive
 
     string CreateSessionId();
 
-    string GetLocationFolder(string sessionId, int locationIndex);
+    string GetLocationFolder(string sessionId, int locationIndex, string? locationPath = null);
 
     Task RecordAsync(CleaningSession session, CancellationToken cancellationToken);
 

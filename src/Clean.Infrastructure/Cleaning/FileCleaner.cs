@@ -92,7 +92,7 @@ public sealed class FileCleaner(
             var filesBefore = run.RemovedFiles;
             var cutoff = clock.GetUtcNow().UtcDateTime - TimeSpan.FromDays(rule.MinimumAgeDays);
 
-            CleanFolder(folder, archive.GetLocationFolder(sessionId, index), cutoff, run, cancellationToken);
+            CleanFolder(folder, archive.GetLocationFolder(sessionId, index, folder.FullName), cutoff, run, cancellationToken);
             locations.Add(new CleaningSessionLocation(
                 index,
                 rule.Id,

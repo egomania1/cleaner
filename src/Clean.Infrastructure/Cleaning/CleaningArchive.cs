@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Clean.Core.Files;
 using Clean.Core.Interfaces;
 using Clean.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -37,8 +38,10 @@ public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogg
 
     public string CreateSessionId() => $"{clock.GetUtcNow():yyyyMMdd-HHmmss}-{Guid.NewGuid().ToString("N")[..6]}";
 
-    public string GetLocationFolder(string sessionId, int locationIndex) =>
-        Path.Combine(SessionFolder(sessionId), locationIndex.ToString(System.Globalization.CultureInfo.InvariantCulture));
+    // Files are archived on their own drive: moving them to another one would copy them, slowly,
+    // and fill the other drive instead of freeing anything.
+    public string GetLocationFolder(string sessionId, int locationIndex, string? locationPath = null) =>
+        Path.Combine(SessionFolder(sessionId, locationPath), locationIndex.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
     public async Task RecordAsync(CleaningSession session, CancellationToken cancellationToken)
     {
@@ -72,7 +75,7 @@ public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogg
         // A file that could not be moved back stays in the archive, so the session can be restored again later.
         if (result.FailedFileCount == 0 && !cancellationToken.IsCancellationRequested)
         {
-            await Task.Run(() => DeleteFolder(SessionFolder(sessionId)), CancellationToken.None);
+            await Task.Run(() => DeleteSessionFolders(session), CancellationToken.None);
             await SetStatusAsync(sessionId, CleaningSessionStatus.Restored);
         }
 
@@ -88,7 +91,7 @@ public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogg
             return 0;
         }
 
-        var freed = await Task.Run(() => DeleteFolder(SessionFolder(sessionId)), CancellationToken.None);
+        var freed = await Task.Run(() => DeleteSessionFolders(session), CancellationToken.None);
         await SetStatusAsync(sessionId, CleaningSessionStatus.Freed);
         Changed?.Invoke();
         return freed;
@@ -116,7 +119,7 @@ public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogg
 
         foreach (var location in session.Locations)
         {
-            var source = GetLocationFolder(session.Id, location.Index);
+            var source = GetLocationFolder(session.Id, location.Index, location.Path);
             if (!Directory.Exists(source))
             {
                 continue;
@@ -163,6 +166,15 @@ public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogg
         return new RestoreResult(restored, restoredBytes, conflicts, failed);
     }
 
+    private long DeleteSessionFolders(CleaningSession session)
+    {
+        var folders = session.Locations
+            .Select(location => SessionFolder(session.Id, location.Path))
+            .Append(SessionFolder(session.Id))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+        return folders.Sum(DeleteFolder);
+    }
+
     private long DeleteFolder(string folder)
     {
         if (!Directory.Exists(folder))
@@ -198,7 +210,7 @@ public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogg
         return freed;
     }
 
-    private string SessionFolder(string sessionId)
+    private string SessionFolder(string sessionId, string? locationPath = null)
     {
         // Ids come from our own history file, but a hand-edited one must not point outside the archive.
         if (sessionId.Length == 0 || sessionId.IndexOfAny(['\\', '/', ':', '.']) >= 0)
@@ -206,7 +218,20 @@ public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogg
             throw new ArgumentException($"'{sessionId}' is not a valid session id.", nameof(sessionId));
         }
 
-        return Path.Combine(SessionsFolder, sessionId);
+        var archiveDrive = Path.GetPathRoot(Path.GetFullPath(rootFolder));
+        var locationDrive = locationPath is null ? null : Path.GetPathRoot(Path.GetFullPath(locationPath));
+        if (locationDrive is null || string.Equals(locationDrive, archiveDrive, StringComparison.OrdinalIgnoreCase))
+        {
+            return Path.Combine(SessionsFolder, sessionId);
+        }
+
+        var volumeArchive = Path.Combine(locationDrive, UserFileScope.VolumeArchiveFolderName);
+        if (!Directory.Exists(volumeArchive))
+        {
+            Directory.CreateDirectory(volumeArchive).Attributes |= FileAttributes.Hidden;
+        }
+
+        return Path.Combine(volumeArchive, "sessions", sessionId);
     }
 
     private async Task<CleaningSession?> FindAsync(string sessionId, CancellationToken cancellationToken) =>

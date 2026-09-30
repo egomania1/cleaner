@@ -1,5 +1,6 @@
 using Clean.App.Services;
 using Clean.App.ViewModels;
+using Clean.Core.Files;
 using Clean.Core.Interfaces;
 using Clean.Core.Rules;
 using Clean.Core.Safety;
@@ -22,6 +23,22 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
+        UnhandledException += (_, e) => WriteCrashLog(e.Exception);
+    }
+
+    // The Debug logger is invisible outside Visual Studio; a crash leaves this file behind instead.
+    private static void WriteCrashLog(Exception exception)
+    {
+        try
+        {
+            var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Clean");
+            Directory.CreateDirectory(folder);
+            File.AppendAllText(Path.Combine(folder, "crash.log"), $"{DateTimeOffset.Now:O}{Environment.NewLine}{exception}{Environment.NewLine}{Environment.NewLine}");
+        }
+        catch (Exception logFailure) when (logFailure is IOException or UnauthorizedAccessException)
+        {
+            // Nothing else can be done while the app is going down.
+        }
     }
 
     public static IServiceProvider Services { get; } = ConfigureServices();
@@ -57,6 +74,8 @@ public partial class App : Application
         services.AddSingleton<IFileExplorer, FileExplorer>();
         services.AddSingleton<IInstalledProgramCatalog, InstalledProgramCatalog>();
         services.AddSingleton<IEntryInspector, EntryInspector>();
+        services.AddSingleton<IFolderSizer, FolderSizer>();
+        services.AddSingleton<IProcessMonitor, ProcessMonitor>();
         services.AddSingleton<NavigationService>();
         services.AddSingleton(TimeProvider.System);
 
@@ -78,10 +97,18 @@ public partial class App : Application
             provider.GetRequiredService<ILogger<CleaningArchive>>()));
         services.AddSingleton<ICleaner, FileCleaner>();
 
+        services.AddSingleton(UserFileScope.ForCurrentUser(CleaningArchive.DefaultFolder));
+        services.AddSingleton<IFileScanner, FileScanner>();
+        services.AddSingleton<IDuplicateFinder, DuplicateFinder>();
+        services.AddSingleton<IFileRemover, FileRemover>();
+
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<StorageViewModel>();
         services.AddSingleton<CleanerViewModel>();
         services.AddSingleton<HistoryViewModel>();
+        services.AddSingleton<AppsViewModel>();
+        services.AddSingleton<DuplicatesViewModel>();
+        services.AddSingleton<LargeFilesViewModel>();
         services.AddSingleton<MainWindow>();
 
         return services.BuildServiceProvider();

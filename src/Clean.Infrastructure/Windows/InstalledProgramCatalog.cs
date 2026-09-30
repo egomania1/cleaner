@@ -15,6 +15,8 @@ public sealed class InstalledProgramCatalog(ILogger<InstalledProgramCatalog> log
 
     private readonly Lazy<IReadOnlyList<ProgramInfo>> _programs = new(() => ReadAll(logger));
 
+    public IReadOnlyList<ProgramInfo> All => _programs.Value;
+
     public IReadOnlyList<ProgramInfo> ProgramsAt(string path) => ProgramMatcher.ProgramsAt(_programs.Value, path);
 
     private static IReadOnlyList<ProgramInfo> ReadAll(ILogger logger)
@@ -64,7 +66,8 @@ public sealed class InstalledProgramCatalog(ILogger<InstalledProgramCatalog> log
             Publisher: entry.GetValue("Publisher") as string,
             Version: entry.GetValue("DisplayVersion") as string,
             InstalledOn: ParseInstallDate(entry.GetValue("InstallDate") as string),
-            Location: LocationOf(entry));
+            Location: LocationOf(entry),
+            EstimatedSizeBytes: entry.GetValue("EstimatedSize") is int kilobytes && kilobytes > 0 ? kilobytes * 1024L : null);
     }
 
     private static string? LocationOf(RegistryKey entry)

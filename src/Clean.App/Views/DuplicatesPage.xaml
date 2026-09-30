@@ -1,0 +1,359 @@
+<Page
+    x:Class="Clean.App.Views.DuplicatesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Clean.App.Controls"
+    xmlns:viewmodels="using:Clean.App.ViewModels">
+    <Page.Resources>
+        <DataTemplate x:Key="ShareRowTemplate" x:DataType="viewmodels:ShareRow">
+            <StackPanel Spacing="6">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Rectangle
+                            Width="10"
+                            Height="10"
+                            VerticalAlignment="Center"
+                            Fill="{x:Bind Brush}"
+                            RadiusX="2"
+                            RadiusY="2" />
+                        <TextBlock
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Text="{x:Bind Label}"
+                            TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <TextBlock
+                        Grid.Column="1"
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        Text="{x:Bind SizeText}" />
+                </Grid>
+                <Grid Height="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="{x:Bind BarWidth}" />
+                        <ColumnDefinition Width="{x:Bind BarRest}" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.ColumnSpan="2" Background="{StaticResource SegmentEmptyBrush}" CornerRadius="3" />
+                    <Border Background="{x:Bind Brush}" CornerRadius="3" />
+                </Grid>
+                <TextBlock FontSize="12" Foreground="{StaticResource MutedTextBrush}" Text="{x:Bind DetailText}" />
+            </StackPanel>
+        </DataTemplate>
+    </Page.Resources>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled">
+        <!-- The content column grows up to 1600px; the side columns share what is left, which keeps it centered. -->
+        <Grid Padding="32,8,32,32">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="100*" MaxWidth="1600" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="1" Spacing="16">
+                <StackPanel Spacing="4">
+                    <controls:PageTitle Index="05" Text="Doublons" />
+                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Les fichiers identiques rangés à plusieurs endroits. Une copie de chacun est toujours gardée." />
+                </StackPanel>
+
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ComboBox
+                        MinWidth="340"
+                        VerticalAlignment="Center"
+                        IsEnabled="{x:Bind ViewModel.CanChangeSettings, Mode=OneWay}"
+                        ItemsSource="{x:Bind ViewModel.Disks}"
+                        SelectedIndex="{x:Bind ViewModel.SelectedDiskIndex, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodels:DiskItemViewModel">
+                                <TextBlock Text="{x:Bind DisplayName}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <ComboBox
+                        Grid.Column="1"
+                        MinWidth="220"
+                        VerticalAlignment="Center"
+                        IsEnabled="{x:Bind ViewModel.CanChangeSettings, Mode=OneWay}"
+                        ItemsSource="{x:Bind ViewModel.SizeOptions}"
+                        SelectedIndex="{x:Bind ViewModel.SelectedSizeIndex, Mode=TwoWay}" />
+                    <controls:ShinyButton
+                        Grid.Column="2"
+                        Padding="30,9"
+                        Command="{x:Bind ViewModel.AnalyzeCommand}"
+                        Content="Analyser" />
+                </Grid>
+
+                <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.IsIdle, Mode=OneWay}">
+                    <TextBlock
+                        Style="{StaticResource MutedTextStyle}"
+                        Text="Choisis un disque et une taille minimale, puis lance l'analyse. Clean compare le contenu des fichiers, pas seulement leur nom : deux fichiers ne sont des doublons que s'ils sont identiques octet par octet."
+                        TextWrapping="Wrap" />
+                </Border>
+
+                <controls:FileToolStatus SecondaryLabel="CONTENU COMPARÉ" ViewModel="{x:Bind ViewModel}" />
+
+                <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.HasNoDuplicates, Mode=OneWay}">
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            FontSize="16"
+                            FontWeight="SemiBold"
+                            Text="Aucun doublon trouvé" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.ScopeText, Mode=OneWay}" />
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.HasDuplicates, Mode=OneWay}">
+                    <!-- KPI band. -->
+                    <Border
+                        Padding="0,22"
+                        Background="{StaticResource CardBackgroundBrush}"
+                        BorderBrush="{StaticResource CardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Padding="24,0" Spacing="4">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="RÉCUPÉRABLE" />
+                                <controls:AnimatedText
+                                    HorizontalAlignment="Left"
+                                    Effect="CountUp"
+                                    FontFamily="Bahnschrift"
+                                    FontSize="40"
+                                    FontWeight="SemiBold"
+                                    IsShiny="True"
+                                    Text="{x:Bind ViewModel.WastedText, Mode=OneWay}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="en gardant une copie de chaque" />
+                            </StackPanel>
+                            <Rectangle Grid.Column="1" Width="1" Fill="{StaticResource CardBorderBrush}" />
+                            <StackPanel Grid.Column="2" Padding="24,0" Spacing="4">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="FICHIERS EN DOUBLE" />
+                                <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.GroupCountText, Mode=OneWay}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="groupes de copies identiques" />
+                            </StackPanel>
+                            <Rectangle Grid.Column="3" Width="1" Fill="{StaticResource CardBorderBrush}" />
+                            <StackPanel Grid.Column="4" Padding="24,0" Spacing="4">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="COPIES EN TROP" />
+                                <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.ExtraCopiesText, Mode=OneWay}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="fichiers qui pourraient partir" />
+                            </StackPanel>
+                            <Rectangle Grid.Column="5" Width="1" Fill="{StaticResource CardBorderBrush}" />
+                            <StackPanel Grid.Column="6" Padding="24,0" Spacing="4">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="SÉLECTION" />
+                                <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.SelectedBytesText, Mode=OneWay}" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.SelectionText, Mode=OneWay}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Where the wasted space is. -->
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="16">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="PAR TYPE DE FICHIER" />
+                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Place perdue en copies, par type." />
+                                </StackPanel>
+                                <ItemsRepeater ItemTemplate="{StaticResource ShareRowTemplate}" ItemsSource="{x:Bind ViewModel.ByType, Mode=OneWay}">
+                                    <ItemsRepeater.Layout>
+                                        <StackLayout Spacing="16" />
+                                    </ItemsRepeater.Layout>
+                                </ItemsRepeater>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="16">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="OÙ SONT LES COPIES" />
+                                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Les dossiers qui contiennent le plus de copies en trop." />
+                                </StackPanel>
+                                <ItemsRepeater ItemTemplate="{StaticResource ShareRowTemplate}" ItemsSource="{x:Bind ViewModel.ByFolder, Mode=OneWay}">
+                                    <ItemsRepeater.Layout>
+                                        <StackLayout Spacing="16" />
+                                    </ItemsRepeater.Layout>
+                                </ItemsRepeater>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Selection and action. -->
+                    <Border Style="{StaticResource CardStyle}">
+                        <Grid ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="QUELLE COPIE GARDER" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.StrategyText, Mode=OneWay}" />
+                            </StackPanel>
+                            <Button
+                                Grid.Column="1"
+                                Padding="14,8"
+                                Command="{x:Bind ViewModel.KeepOldestCommand}"
+                                Content="La plus ancienne"
+                                Style="{StaticResource LiquidButtonStyle}" />
+                            <Button
+                                Grid.Column="2"
+                                Padding="14,8"
+                                Command="{x:Bind ViewModel.KeepNewestCommand}"
+                                Content="La plus récente"
+                                Style="{StaticResource LiquidButtonStyle}" />
+                            <Button
+                                Grid.Column="3"
+                                Padding="14,8"
+                                Command="{x:Bind ViewModel.KeepShortestCommand}"
+                                Content="Chemin le plus court"
+                                Style="{StaticResource LiquidButtonStyle}" />
+                            <Button
+                                Grid.Column="4"
+                                Padding="14,8"
+                                Command="{x:Bind ViewModel.SelectNoneCommand}"
+                                Content="Rien"
+                                Style="{StaticResource LiquidButtonStyle}" />
+                            <controls:ShinyButton
+                                Grid.Column="5"
+                                Padding="30,9"
+                                Command="{x:Bind ViewModel.RemoveCommand}"
+                                Content="{x:Bind ViewModel.RemoveButtonText, Mode=OneWay}" />
+                        </Grid>
+                    </Border>
+
+                    <!-- One card per set of identical files. -->
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Rows, Mode=OneWay}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Spacing="10" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodels:DuplicateGroupRow">
+                                <Border Style="{StaticResource CardStyle}">
+                                    <StackPanel Spacing="12">
+                                        <Grid ColumnSpacing="16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Rectangle
+                                                Width="4"
+                                                Height="36"
+                                                Fill="{x:Bind Brush}"
+                                                RadiusX="2"
+                                                RadiusY="2" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock
+                                                    FontSize="15"
+                                                    FontWeight="SemiBold"
+                                                    Text="{x:Bind Name}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                                <TextBlock
+                                                    FontSize="12"
+                                                    Foreground="{StaticResource MutedTextBrush}"
+                                                    Text="{x:Bind CopiesText}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                                                <TextBlock
+                                                    HorizontalAlignment="Right"
+                                                    FontFamily="Bahnschrift"
+                                                    FontSize="22"
+                                                    FontWeight="SemiBold"
+                                                    Text="{x:Bind WastedText}" />
+                                                <TextBlock
+                                                    HorizontalAlignment="Right"
+                                                    FontSize="11"
+                                                    Foreground="{StaticResource MutedTextBrush}"
+                                                    Text="récupérables" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <ItemsRepeater ItemsSource="{x:Bind Files}">
+                                            <ItemsRepeater.Layout>
+                                                <StackLayout Spacing="4" />
+                                            </ItemsRepeater.Layout>
+                                            <ItemsRepeater.ItemTemplate>
+                                                <DataTemplate x:DataType="viewmodels:DuplicateFileRow">
+                                                    <Grid
+                                                        Padding="10,6"
+                                                        Background="{StaticResource CardBackgroundBrush}"
+                                                        ColumnSpacing="14"
+                                                        CornerRadius="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="170" />
+                                                            <ColumnDefinition Width="80" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <CheckBox
+                                                            MinWidth="0"
+                                                            VerticalAlignment="Center"
+                                                            AutomationProperties.Name="{x:Bind Path}"
+                                                            IsChecked="{x:Bind IsSelected, Mode=TwoWay}" />
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            VerticalAlignment="Center"
+                                                            FontSize="13"
+                                                            IsTextSelectionEnabled="True"
+                                                            Text="{x:Bind Folder}"
+                                                            TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock
+                                                            Grid.Column="2"
+                                                            VerticalAlignment="Center"
+                                                            FontSize="12"
+                                                            Foreground="{StaticResource MutedTextBrush}"
+                                                            Text="{x:Bind DateText}" />
+                                                        <TextBlock
+                                                            Grid.Column="3"
+                                                            VerticalAlignment="Center"
+                                                            CharacterSpacing="60"
+                                                            FontSize="11"
+                                                            FontWeight="SemiBold"
+                                                            Foreground="{StaticResource MutedTextBrush}"
+                                                            Text="{x:Bind StateText, Mode=OneWay}" />
+                                                        <Button
+                                                            Grid.Column="4"
+                                                            Padding="12,4"
+                                                            Click="OnRevealClicked"
+                                                            Content="Ouvrir"
+                                                            Style="{StaticResource LiquidButtonStyle}"
+                                                            Tag="{x:Bind Path}" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsRepeater.ItemTemplate>
+                                        </ItemsRepeater>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+
+                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.HiddenGroupsText, Mode=OneWay}" />
+                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.ScopeText, Mode=OneWay}" />
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>
