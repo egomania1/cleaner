@@ -6,7 +6,7 @@ Windows desktop app that analyzes what fills a drive, explains it, and only clea
 
 ## Stack
 
-- C# / .NET 8
+- C# / .NET 10
 - WinUI 3 (Windows App SDK 2.5, unpackaged)
 - xUnit
 
@@ -24,7 +24,7 @@ tests/
 
 ## Build
 
-Requires the .NET 8 SDK and the Windows App Runtime 2.5 (x64).
+Requires the .NET 10 SDK and the Windows App Runtime 2.5 (x64).
 
 ```
 dotnet restore

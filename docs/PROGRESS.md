@@ -4,9 +4,9 @@ Last update: 2026-09-30. Branch: `winui`. The original Electron app is still on 
 
 ## How to work on it
 
-- Stack: C# .NET 8, WinUI 3 (Windows App SDK 2.5.1, unpackaged), MVVM with CommunityToolkit.Mvvm, DI with Microsoft.Extensions.
+- Stack: C# .NET 10, WinUI 3 (Windows App SDK 2.5.1, unpackaged), MVVM with CommunityToolkit.Mvvm, DI with Microsoft.Extensions.
 - Build and test from the repo root: `dotnet build Clean.sln` then `dotnet test Clean.sln`.
-- Run: `src/Clean.App/bin/x64/Debug/net8.0-windows10.0.19041.0/win-x64/Clean.exe`.
+- Run: `src/Clean.App/bin/x64/Debug/net10.0-windows10.0.19041.0/win-x64/Clean.exe`.
 - The build must stay at 0 warnings (`TreatWarningsAsErrors`).
 - Working method: one phase at a time, build + test + real run, then a "PHASE X COMPLETE" checkpoint. Wait for "go" before the next phase. Explain the code in French at each step.
 - Code style: simple and clean, no obvious comments (only non-obvious "why"), small files, no business logic in views.
@@ -79,3 +79,5 @@ Phase 2 step 1 finished: S3 (removal only on fixed and removable drives, `DiskIn
 Phase 2 step 2 (started): local file log (`FileLoggerProvider`, `%LOCALAPPDATA%\Clean\logs\clean-yyyyMMdd.log`, 14 days, 2 MB per day, Information and above, user name and profile folder masked by `LogSanitizer`), crash.log rotated at 1 MB and sanitized. Not started yet: .NET 10 migration (only the .NET 8 SDK is installed, needs the user's OK to install), MSIX + signing (needs a certificate), licence check (needs the website API). 327 tests.
 
 Phase 2 step 2, licence groundwork (no .NET 10 SDK install: the user declined): `Core/Licensing` (`LicenseToken`, `LicenseCheck`, `LicenseVerifier`: ECDSA P-256 signed token, offline, 3 days of grace), `Infrastructure/Licensing` (`DeviceIdentity` hashed machine id, `LicenseStore`), contract for the website in `docs/LICENSING.md`. Not wired into the UI: needs the real public key and the free/paid decision. .NET 10 migration still pending the SDK. 346 tests.
+
+Phase 2 step 2: migrated to .NET 10 (SDK 10.0.401 installed with winget on 2026-10-01, Windows App SDK 2.5.1 unchanged, Microsoft.Extensions 10.0.0, test packages updated: no more vulnerable package). Run path is now `src/Clean.App/bin/x64/Debug/net10.0-windows10.0.19041.0/win-x64/Clean.exe`. 346 tests, app starts and the Applications page works. The installer may ask for a restart to finish.
