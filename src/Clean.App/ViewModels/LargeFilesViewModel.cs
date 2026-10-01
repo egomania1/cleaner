@@ -37,10 +37,11 @@ public sealed class LargeFilesViewModel : FileToolViewModel
         IInstalledProgramCatalog programs,
         IFileRemover remover,
         IFileExplorer explorer,
+        ILicenseService license,
         TimeProvider clock,
         NavigationService navigation,
         ILogger<LargeFilesViewModel> logger)
-        : base(diskService, scanner, remover, explorer, navigation, logger)
+        : base(diskService, scanner, remover, explorer, license, navigation, logger)
     {
         _programs = programs;
         _clock = clock;

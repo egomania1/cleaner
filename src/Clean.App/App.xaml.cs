@@ -11,6 +11,8 @@ using Clean.Core.Scanning;
 using Clean.Infrastructure.Browsers;
 using Clean.Infrastructure.Cleaning;
 using Clean.Infrastructure.FileSystem;
+using Clean.Core.Licensing;
+using Clean.Infrastructure.Licensing;
 using Clean.Infrastructure.Logging;
 using Clean.Infrastructure.Rules;
 using Clean.Infrastructure.Scanning;
@@ -136,12 +138,24 @@ public partial class App : Application
             CleaningArchive.DefaultFolder,
             provider.GetRequiredService<TimeProvider>(),
             provider.GetRequiredService<ILogger<CleaningArchive>>()));
-        services.AddSingleton<ICleaner, FileCleaner>();
+
+        services.AddSingleton<ILicenseService>(provider => new LicenseService(
+            new LicenseStore(LicenseStore.DefaultPath),
+            new TrialStore(TrialStore.DefaultPath),
+            LicenseKeys.PublicKey is { } publicKey ? new LicenseVerifier(publicKey) : null,
+            DeviceIdentity.Current(),
+            provider.GetRequiredService<TimeProvider>(),
+            provider.GetRequiredService<ILogger<LicenseService>>()));
+        services.AddSingleton<ICleaner>(provider => new LicensedCleaner(
+            ActivatorUtilities.CreateInstance<FileCleaner>(provider),
+            provider.GetRequiredService<ILicenseService>()));
 
         services.AddSingleton(UserFileScope.ForCurrentUser(CleaningArchive.DefaultFolder));
         services.AddSingleton<IFileScanner, FileScanner>();
         services.AddSingleton<IDuplicateFinder, DuplicateFinder>();
-        services.AddSingleton<IFileRemover, FileRemover>();
+        services.AddSingleton<IFileRemover>(provider => new LicensedFileRemover(
+            ActivatorUtilities.CreateInstance<FileRemover>(provider),
+            provider.GetRequiredService<ILicenseService>()));
 
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<StorageViewModel>();
@@ -150,6 +164,8 @@ public partial class App : Application
         services.AddSingleton<AppsViewModel>();
         services.AddSingleton<DuplicatesViewModel>();
         services.AddSingleton<LargeFilesViewModel>();
+        services.AddSingleton<LicenseViewModel>();
+        services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<MainWindow>();
 
         return services.BuildServiceProvider();

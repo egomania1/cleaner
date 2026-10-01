@@ -34,9 +34,10 @@ public sealed class DuplicatesViewModel : FileToolViewModel
         IInstalledProgramCatalog programs,
         IFileRemover remover,
         IFileExplorer explorer,
+        ILicenseService license,
         NavigationService navigation,
         ILogger<DuplicatesViewModel> logger)
-        : base(diskService, scanner, remover, explorer, navigation, logger)
+        : base(diskService, scanner, remover, explorer, license, navigation, logger)
     {
         _finder = finder;
         _programs = programs;

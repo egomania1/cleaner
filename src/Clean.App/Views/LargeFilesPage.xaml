@@ -60,6 +60,8 @@
                     <TextBlock Style="{StaticResource MutedTextStyle}" Text="Les fichiers qui prennent le plus de place, ce qu'ils sont, et depuis quand personne n'y a touché." />
                 </StackPanel>
 
+                <controls:LicenseBanner />
+
                 <Grid ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />

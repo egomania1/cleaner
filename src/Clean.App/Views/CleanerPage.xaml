@@ -24,6 +24,8 @@
                     <TextBlock Style="{StaticResource MutedTextStyle}" Text="Ce qui peut être nettoyé, pourquoi, et le nettoyage lui-même." />
                 </StackPanel>
 
+                <controls:LicenseBanner />
+
                 <Grid ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />

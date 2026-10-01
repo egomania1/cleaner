@@ -1,0 +1,104 @@
+<Page
+    x:Class="Clean.App.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Clean.App.Controls">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled">
+        <Grid Padding="32,8,32,32">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="100*" MaxWidth="1600" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="1" Spacing="16">
+                <StackPanel Spacing="4">
+                    <controls:PageTitle Index="10" Text="Paramètres" />
+                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Ta licence, et ce que Clean garde sur ce PC." />
+                </StackPanel>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="14">
+                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="LICENCE" />
+                        <TextBlock
+                            FontSize="22"
+                            FontWeight="Bold"
+                            Text="{x:Bind ViewModel.License.Title, Mode=OneWay}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.License.Detail, Mode=OneWay}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.License.PriceText}" />
+
+                        <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.License.IsNotLicensed, Mode=OneWay}">
+                            <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="CLÉ DE LICENCE" />
+                            <TextBox
+                                AutomationProperties.Name="Clé de licence"
+                                IsEnabled="{x:Bind ViewModel.License.CanActivate}"
+                                PlaceholderText="Colle ici la clé reçue après ton achat"
+                                Text="{x:Bind ViewModel.License.Token, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button
+                                    Padding="18,8"
+                                    Command="{x:Bind ViewModel.License.ActivateCommand}"
+                                    Content="Activer"
+                                    Style="{StaticResource LiquidButtonStyle}" />
+                                <Button
+                                    Padding="18,8"
+                                    Command="{x:Bind ViewModel.License.OpenPurchaseCommand}"
+                                    Content="Acheter"
+                                    Style="{StaticResource LiquidButtonStyle}"
+                                    Visibility="{x:Bind ViewModel.License.CanBuy}" />
+                            </StackPanel>
+                            <TextBlock
+                                Style="{StaticResource MutedTextStyle}"
+                                Text="L'achat et l'activation des licences seront disponibles à l'ouverture de la boutique."
+                                Visibility="{x:Bind ViewModel.License.ShopNotOpen}" />
+                        </StackPanel>
+
+                        <TextBlock
+                            Style="{StaticResource MutedTextStyle}"
+                            Text="{x:Bind ViewModel.License.ActivationMessage, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.License.HasActivationMessage, Mode=OneWay}" />
+
+                        <Button
+                            Padding="18,8"
+                            HorizontalAlignment="Left"
+                            Command="{x:Bind ViewModel.License.DeactivateCommand}"
+                            Content="Retirer la licence de ce PC"
+                            Style="{StaticResource LiquidButtonStyle}"
+                            Visibility="{x:Bind ViewModel.License.IsLicensed, Mode=OneWay}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="10">
+                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="IDENTIFIANT DE CE PC" />
+                        <TextBlock
+                            FontFamily="Consolas"
+                            IsTextSelectionEnabled="True"
+                            Text="{x:Bind ViewModel.License.DeviceId}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="Il sert à lier une licence à ce PC. Il ne permet pas de retrouver ton identité." />
+                        <Button
+                            Padding="18,8"
+                            HorizontalAlignment="Left"
+                            Command="{x:Bind ViewModel.License.CopyDeviceIdCommand}"
+                            Content="Copier"
+                            Style="{StaticResource LiquidButtonStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="10">
+                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="JOURNAL ET CONFIDENTIALITÉ" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.LogsText}" />
+                        <Button
+                            Padding="18,8"
+                            HorizontalAlignment="Left"
+                            Command="{x:Bind ViewModel.OpenLogsCommand}"
+                            Content="Ouvrir le dossier du journal"
+                            Style="{StaticResource LiquidButtonStyle}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

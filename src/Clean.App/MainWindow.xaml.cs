@@ -23,13 +23,13 @@ public sealed partial class MainWindow : Window
         ["apps"] = typeof(AppsPage),
         ["duplicates"] = typeof(DuplicatesPage),
         ["large-files"] = typeof(LargeFilesPage),
+        ["settings"] = typeof(SettingsPage),
     };
 
     private static readonly Dictionary<string, PlaceholderContent> UpcomingPages = new()
     {
         ["developer"] = new("07", "Développeur", "Les dossiers node_modules, bin/obj et les caches npm, NuGet ou pip."),
         ["startup"] = new("09", "Démarrage", "Les applications lancées au démarrage de Windows."),
-        ["settings"] = new("10", "Paramètres", "Thème, options d'analyse, exclusions et confidentialité."),
     };
 
     private static readonly NavItem[] NavItems =

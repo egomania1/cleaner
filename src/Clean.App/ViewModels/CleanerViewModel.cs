@@ -19,6 +19,7 @@ public sealed class CleanerViewModel : ObservableObject
     private readonly IDiskService _diskService;
     private readonly ISafetyEngine _safetyEngine;
     private readonly ICleaner _cleaner;
+    private readonly ILicenseService _license;
     private readonly ILogger<CleanerViewModel> _logger;
 
     private Task? _disksLoading;
@@ -41,6 +42,7 @@ public sealed class CleanerViewModel : ObservableObject
         IDiskService diskService,
         ISafetyEngine safetyEngine,
         ICleaner cleaner,
+        ILicenseService license,
         NavigationService navigation,
         ILogger<CleanerViewModel> logger)
     {
@@ -48,6 +50,7 @@ public sealed class CleanerViewModel : ObservableObject
         _diskService = diskService;
         _safetyEngine = safetyEngine;
         _cleaner = cleaner;
+        _license = license;
         _logger = logger;
         AnalyzeCommand = new AsyncRelayCommand(AnalyzeAsync, () => SelectedDisk is not null && !IsCleaning);
         CancelCommand = AnalyzeCommand.CreateCancelCommand();
@@ -304,6 +307,12 @@ public sealed class CleanerViewModel : ObservableObject
 
     private async Task CleanAsync(CancellationToken cancellationToken)
     {
+        if (!_license.Access.CanClean)
+        {
+            StatusMessage = "Essai terminé : l'analyse reste gratuite, mais mettre de côté ces fichiers demande la licence (Paramètres).";
+            return;
+        }
+
         var decisions = SelectedRows.Select(row => _safetyEngine.Evaluate(row.Item)).ToList();
         var allowed = decisions.Where(decision => decision.IsAllowed).ToList();
         var refused = decisions.Where(decision => !decision.IsAllowed).ToList();

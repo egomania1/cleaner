@@ -60,6 +60,8 @@
                     <TextBlock Style="{StaticResource MutedTextStyle}" Text="Les fichiers identiques rangés à plusieurs endroits. Une copie de chacun est toujours gardée." />
                 </StackPanel>
 
+                <controls:LicenseBanner />
+
                 <Grid ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />

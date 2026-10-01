@@ -44,9 +44,11 @@ base64url(payload) + "." + base64url(signature)
 
 1. After a successful Stripe payment (verified webhook, idempotent), create the licence and sign a token.
 2. Give the token to the customer in their account page and by e-mail. The app stores it in `%LOCALAPPDATA%\Clean\license.key`.
-3. On renewal, sign a new token with a later `expiresAt`. On refund or chargeback, stop issuing new tokens; the current one ends at its `expiresAt` (keep tokens short, for example 35 days for a monthly plan, and let the app fetch the next one).
-4. Offer cancellation in the account page and in the app (three clicks at most).
+3. The product is a **one-time purchase (3,90 €)**: sign a token with `plan: "lifetime"` and an `expiresAt` far in the future (for example 70 years). On refund within the withdrawal period, the website records the refund and the token is no longer re-issued; a short-lived token with a check-in can be added later if abuse appears.
+4. Show the price (3,90 € TTC, one-time) and the 14-day withdrawal terms before payment; ask for the express consent to immediate delivery and the waiver of withdrawal if the licence is delivered at once.
 
-## Not done yet in the app
+## In the app today
 
-- No screen to paste or fetch a token, no paid/free feature gate, and the public key is not embedded: all of that waits for the website and for the decision on what is free and what is paid.
+- Trial: 5 full days from the first launch (`trial.json`), then analysis, history and restoring stay free; moving or removing files needs a licence (`LicenseEvaluator`, `LicensedCleaner`, `LicensedFileRemover`).
+- Settings page: licence card, key field, PC id, log folder.
+- Still missing: the real public key (`LicenseKeys.PublicKey`, null for now, so activation is refused), the shop URL (`LicenseViewModel.PurchaseUrl`, empty, so the buy button is hidden).

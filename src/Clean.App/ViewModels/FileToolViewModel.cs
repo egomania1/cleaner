@@ -20,6 +20,7 @@ public abstract class FileToolViewModel : ObservableObject
     private readonly IDiskService _diskService;
     private readonly IFileRemover _remover;
     private readonly IFileExplorer _explorer;
+    private readonly ILicenseService _license;
 
     private Task? _disksLoading;
     private int _selectedDiskIndex = -1;
@@ -39,9 +40,11 @@ public abstract class FileToolViewModel : ObservableObject
         IFileScanner scanner,
         IFileRemover remover,
         IFileExplorer explorer,
+        ILicenseService license,
         NavigationService navigation,
         ILogger logger)
     {
+        _license = license;
         _diskService = diskService;
         Scanner = scanner;
         _remover = remover;
@@ -269,6 +272,12 @@ public abstract class FileToolViewModel : ObservableObject
 
     private async Task RemoveAsync(CancellationToken cancellationToken)
     {
+        if (!_license.Access.CanClean)
+        {
+            StatusMessage = "Essai terminé : l'analyse reste gratuite, mais retirer des fichiers demande la licence (Paramètres).";
+            return;
+        }
+
         var requests = SelectedRequests();
         if (requests.Count == 0)
         {
