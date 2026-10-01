@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [winui, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore Clean.sln
+
+      - name: Build (warnings are errors)
+        run: dotnet build Clean.sln --no-restore -c Release
+
+      - name: Test
+        run: dotnet test Clean.sln --no-build -c Release --collect:"XPlat Code Coverage" --results-directory TestResults
+
+      - name: Check for vulnerable packages
+        shell: bash
+        run: |
+          dotnet list Clean.sln package --vulnerable --include-transitive 2>&1 | tee vulnerable.txt
+          if grep -q "has the following vulnerable packages" vulnerable.txt; then
+            echo "A package has a known vulnerability."
+            exit 1
+          fi
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: TestResults
