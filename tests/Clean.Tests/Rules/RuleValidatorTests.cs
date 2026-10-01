@@ -88,6 +88,32 @@ public class RuleValidatorTests
         Assert.Contains(Validate(Rule() with { Paths = [path] }), problem => problem.Contains("protected"));
     }
 
+    [Theory]
+    [InlineData(@"C:\Users\Test\Work\Projects")]
+    [InlineData(@"C:\Users\Test\Downloads\Old")]
+    [InlineData(@"D:\Backups")]
+    public void Validate_RejectsATempVariablePointedAtAFolderThatIsNotATempFolder(string redirected)
+    {
+        var problems = RuleValidator.Validate(
+            Rule() with { Paths = ["%TEMP%"] },
+            path => path.Replace("%TEMP%", redirected, StringComparison.OrdinalIgnoreCase));
+
+        Assert.Contains(problems, problem => problem.Contains("not a Temp folder"));
+    }
+
+    [Theory]
+    [InlineData(@"C:\Users\Test\AppData\Local\Temp")]
+    [InlineData(@"E:\Temp")]
+    [InlineData(@"D:\tmp\")]
+    public void Validate_AcceptsARealTempFolderOnAnyDrive(string tempFolder)
+    {
+        var problems = RuleValidator.Validate(
+            Rule() with { Paths = ["%TEMP%", "%TMP%"] },
+            path => path.Replace("%TEMP%", tempFolder, StringComparison.OrdinalIgnoreCase).Replace("%TMP%", tempFolder, StringComparison.OrdinalIgnoreCase));
+
+        Assert.Empty(problems);
+    }
+
     [Fact]
     public void Validate_IgnoresVariablesMissingOnThisPc()
     {

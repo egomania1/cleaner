@@ -105,7 +105,7 @@ public partial class App : Application
         services.AddSingleton<BrowserDetector>();
         services.AddSingleton<IRuleEngine>(provider =>
         {
-            var fileRules = provider.GetRequiredService<JsonRuleLoader>().Load(JsonRuleLoader.DefaultFolder).Rules;
+            var fileRules = provider.GetRequiredService<JsonRuleLoader>().LoadEmbedded().Rules;
             var browserRules = BrowserRuleBuilder.Build(
                 provider.GetRequiredService<BrowserDetector>().Detect(),
                 Environment.ExpandEnvironmentVariables);

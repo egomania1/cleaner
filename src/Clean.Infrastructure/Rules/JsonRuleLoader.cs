@@ -11,7 +11,8 @@ public sealed class JsonRuleLoader(ILogger<JsonRuleLoader> logger)
 {
     public const int SupportedVersion = 1;
 
-    public static string DefaultFolder { get; } = Path.Combine(AppContext.BaseDirectory, "Rules");
+    // The shipped rules are compiled into the program (see the csproj), so a file dropped next to the exe cannot change them.
+    private const string ResourcePrefix = "rules/";
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -22,24 +23,51 @@ public sealed class JsonRuleLoader(ILogger<JsonRuleLoader> logger)
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false) },
     };
 
+    public RuleLoadResult LoadEmbedded() => LoadEmbedded(Environment.ExpandEnvironmentVariables);
+
+    public RuleLoadResult LoadEmbedded(Func<string, string> expand)
+    {
+        var assembly = typeof(JsonRuleLoader).Assembly;
+        var documents = assembly.GetManifestResourceNames()
+            .Where(name => name.StartsWith(ResourcePrefix, StringComparison.Ordinal) && name.EndsWith(".json", StringComparison.Ordinal))
+            .Order(StringComparer.Ordinal)
+            .Select(name => (Name: name[ResourcePrefix.Length..], Read: (Func<string>)(() =>
+            {
+                using var reader = new StreamReader(assembly.GetManifestResourceStream(name)!);
+                return reader.ReadToEnd();
+            })));
+
+        return LoadDocuments(documents, expand, "the program");
+    }
+
+    // For tests and for trying a rule: the app itself only ever uses the embedded rules.
     public RuleLoadResult Load(string folder) => Load(folder, Environment.ExpandEnvironmentVariables);
 
     public RuleLoadResult Load(string folder, Func<string, string> expand)
+    {
+        if (!Directory.Exists(folder))
+        {
+            var missing = new RuleLoadResult([], [$"Rule folder '{folder}' does not exist"]);
+            logger.LogWarning("Rule skipped: {Error}", missing.Errors[0]);
+            return missing;
+        }
+
+        var documents = Directory.EnumerateFiles(folder, "*.json")
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .Select(file => (Name: Path.GetFileName(file), Read: (Func<string>)(() => File.ReadAllText(file))));
+
+        return LoadDocuments(documents, expand, folder);
+    }
+
+    private RuleLoadResult LoadDocuments(IEnumerable<(string Name, Func<string> Read)> documents, Func<string, string> expand, string source)
     {
         var rules = new List<CleaningRule>();
         var errors = new List<string>();
         var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        if (!Directory.Exists(folder))
+        foreach (var (name, read) in documents)
         {
-            errors.Add($"Rule folder '{folder}' does not exist");
-        }
-        else
-        {
-            foreach (var file in Directory.EnumerateFiles(folder, "*.json").Order(StringComparer.OrdinalIgnoreCase))
-            {
-                LoadFile(file, expand, rules, ids, errors);
-            }
+            LoadDocument(name, read, expand, rules, ids, errors);
         }
 
         foreach (var error in errors)
@@ -47,18 +75,17 @@ public sealed class JsonRuleLoader(ILogger<JsonRuleLoader> logger)
             logger.LogWarning("Rule skipped: {Error}", error);
         }
 
-        logger.LogInformation("Loaded {Count} cleaning rules from {Folder}", rules.Count, folder);
+        logger.LogInformation("Loaded {Count} cleaning rules from {Source}", rules.Count, source);
         return new RuleLoadResult(rules, errors);
     }
 
-    private static void LoadFile(string file, Func<string, string> expand, List<CleaningRule> rules, HashSet<string> ids, List<string> errors)
+    private static void LoadDocument(string fileName, Func<string> read, Func<string, string> expand, List<CleaningRule> rules, HashSet<string> ids, List<string> errors)
     {
-        var fileName = Path.GetFileName(file);
         RuleFile? content;
 
         try
         {
-            content = JsonSerializer.Deserialize<RuleFile>(File.ReadAllText(file), Options);
+            content = JsonSerializer.Deserialize<RuleFile>(read(), Options);
         }
         catch (Exception exception) when (exception is JsonException or IOException or UnauthorizedAccessException)
         {

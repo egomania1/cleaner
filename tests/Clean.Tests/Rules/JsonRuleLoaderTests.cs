@@ -108,10 +108,22 @@ public sealed class JsonRuleLoaderTests : IDisposable
     [Fact]
     public void ShippedRules_AreAllValid()
     {
-        var result = _loader.Load(JsonRuleLoader.DefaultFolder);
+        var result = _loader.LoadEmbedded();
 
         Assert.True(result.Errors.Count == 0, string.Join(Environment.NewLine, result.Errors));
         Assert.True(result.Rules.Count >= 12);
+    }
+
+    [Fact]
+    public void ShippedRules_AreCompiledIntoTheProgramAndNeedNoFileOnDisk()
+    {
+        var resources = typeof(JsonRuleLoader).Assembly.GetManifestResourceNames().Where(name => name.StartsWith("rules/")).ToList();
+        var result = _loader.LoadEmbedded();
+
+        Assert.NotEmpty(resources);
+        Assert.Contains(result.Rules, rule => rule.Id == "USER_TEMP");
+        Assert.Contains(result.Rules, rule => rule.Id == "THUMBNAIL_CACHE");
+        Assert.Contains(result.Rules, rule => rule.Id == "WINDOWS_UPDATE_LOGS");
     }
 
     private RuleLoadResult Load() =>

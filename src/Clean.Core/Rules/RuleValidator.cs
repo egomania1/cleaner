@@ -83,6 +83,13 @@ public static partial class RuleValidator
             yield break;
         }
 
+        // A program (or a user setting) can point TEMP anywhere, for example at a work folder: only a real Temp folder is accepted.
+        if (IsTempVariable(path) && !IsNamedTemp(expanded))
+        {
+            yield return $"path '{path}' resolves to '{expanded}', which is not a Temp folder";
+            yield break;
+        }
+
         var protectedFolder = new ProtectedPathService(expand).FindProtectedFolderWithin(expanded);
         if (protectedFolder is not null)
         {
@@ -91,6 +98,13 @@ public static partial class RuleValidator
     }
 
     private static bool IsDriveName(string path) => path.Length == 2 && path[1] == ':';
+
+    private static bool IsTempVariable(string path) =>
+        path.Equals("%TEMP%", StringComparison.OrdinalIgnoreCase) || path.Equals("%TMP%", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsNamedTemp(string expanded) =>
+        Path.GetFileName(Path.TrimEndingDirectorySeparator(expanded)) is { } name
+        && (name.Equals("Temp", StringComparison.OrdinalIgnoreCase) || name.Equals("Tmp", StringComparison.OrdinalIgnoreCase));
 
     [GeneratedRegex("^[A-Z][A-Z0-9_]*$")]
     private static partial Regex IdPattern();

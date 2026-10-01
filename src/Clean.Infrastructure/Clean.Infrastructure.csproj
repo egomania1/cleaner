@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Rules\Definitions\*.json" Link="Rules\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="Rules\Definitions\*.json" LogicalName="rules/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
