@@ -1,11 +1,13 @@
 using Clean.App.Services;
 using Clean.App.ViewModels;
+using Clean.Core.Browsers;
 using Clean.Core.Files;
 using Clean.Core.Interfaces;
 using Clean.Core.Models;
 using Clean.Core.Rules;
 using Clean.Core.Safety;
 using Clean.Core.Scanning;
+using Clean.Infrastructure.Browsers;
 using Clean.Infrastructure.Cleaning;
 using Clean.Infrastructure.FileSystem;
 using Clean.Infrastructure.Rules;
@@ -81,8 +83,20 @@ public partial class App : Application
         services.AddSingleton(TimeProvider.System);
 
         services.AddSingleton<JsonRuleLoader>();
+        services.AddSingleton<BrowserDetector>();
         services.AddSingleton<IRuleEngine>(provider =>
-            new RuleEngine(provider.GetRequiredService<JsonRuleLoader>().Load(JsonRuleLoader.DefaultFolder).Rules));
+        {
+            var fileRules = provider.GetRequiredService<JsonRuleLoader>().Load(JsonRuleLoader.DefaultFolder).Rules;
+            var browserRules = BrowserRuleBuilder.Build(
+                provider.GetRequiredService<BrowserDetector>().Detect(),
+                Environment.ExpandEnvironmentVariables);
+            foreach (var error in browserRules.Errors)
+            {
+                provider.GetRequiredService<ILogger<App>>().LogWarning("Browser rule skipped: {Error}", error);
+            }
+
+            return new RuleEngine([.. fileRules, .. browserRules.Rules]);
+        });
 
         services.AddSingleton<IReparsePointDetector, ReparsePointDetector>();
         services.AddSingleton<IScanner>(provider => new TempScanner(

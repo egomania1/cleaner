@@ -23,6 +23,11 @@ public sealed class ProtectedPathService
         @"%USERPROFILE%\Videos",
         @"%USERPROFILE%\Music",
         "%OneDrive%",
+        @"%LOCALAPPDATA%\Google\Chrome\User Data",
+        @"%LOCALAPPDATA%\Microsoft\Edge\User Data",
+        @"%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data",
+        @"%APPDATA%\Opera Software",
+        @"%APPDATA%\Mozilla\Firefox",
     ];
 
     private readonly IReadOnlyList<string> _folders;
