@@ -11,6 +11,7 @@ Je coche et je complète cette liste au fur et à mesure. Date de dernière mise
 - [ ] **Compte Stripe** : créer le compte, activer le paiement, créer le produit « Clean » à 3,90 € TTC (paiement unique), récupérer la clé secrète et le secret du webhook. Ne jamais les mettre dans Git.
 - [ ] **Nom de domaine et hébergement** (UE de préférence) pour le site et le petit serveur de licences. Mettre en place HTTPS.
 - [ ] **Générer les clés de licence réelles** (voir `website/server/README.md`) : la clé privée reste sur le serveur, la clé publique est à coller dans `LicenseKeys.PublicKey`, et l'adresse de la boutique dans `LicenseViewModel.PurchaseUrl`.
+- [ ] **Héberger le serveur de licences** (`website/server`, Node 24, derrière un reverse proxy HTTPS, sauvegarde quotidienne du fichier SQLite) et créer le webhook Stripe : étapes détaillées dans `website/server/README.md`.
 - [ ] **Envoi d'e-mails** (clé de licence, reçu, rappel) : choisir un service d'envoi (compatible RGPD) et le brancher.
 - [ ] **Signature de code / distribution** : soit Microsoft Store (compte développeur particulier gratuit, vérification d'identité), soit certificat de signature (environ 150-300 $/an) ou Azure Artifact Signing. Voir `docs/MSIX.md`.
 - [ ] **Vérifier le nom « Clean »** (INPI, noms de domaine, Microsoft Store) : il est très générique.

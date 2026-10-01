@@ -1,0 +1,16 @@
+{
+  "name": "clean-license-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Receives Stripe payments and signs licence tokens for the Clean app. No dependency: Node.js 24 only.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "node --test",
+    "keygen": "node src/cli.js keygen",
+    "issue": "node src/cli.js issue"
+  }
+}

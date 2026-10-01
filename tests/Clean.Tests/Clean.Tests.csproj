@@ -18,6 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\website\server\test-fixtures\interop.json" Link="interop.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Clean.Core\Clean.Core.csproj" />
     <ProjectReference Include="..\..\src\Clean.Infrastructure\Clean.Infrastructure.csproj" />
   </ItemGroup>
