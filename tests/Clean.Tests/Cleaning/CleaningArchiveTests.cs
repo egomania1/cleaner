@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Clean.Core.Models;
 using Clean.Core.Rules;
 using Clean.Core.Safety;
@@ -122,6 +124,48 @@ public sealed class CleaningArchiveTests : IDisposable
 
         Assert.Empty(await _archive.GetSessionsAsync(CancellationToken.None));
         Assert.True(File.Exists(Path.Combine(_archiveRoot.RootPath, "history.json.broken")));
+    }
+
+    [Fact]
+    public async Task History_LeavesOutDamagedEntriesAndKeepsACopy()
+    {
+        Old(_cache.CreateFile("a.cache", 10));
+        var good = await CleanAsync();
+        var path = Path.Combine(_archiveRoot.RootPath, "history.json");
+        var history = JsonNode.Parse(File.ReadAllText(path))!.AsArray();
+        history.Add(JsonNode.Parse("""{"id":"..\\evil","locations":[]}"""));
+        history.Add(JsonNode.Parse("""{"id":"no-locations","locations":null}"""));
+        history.Add(JsonNode.Parse("""{"id":"relative-path","locations":[{"index":0,"path":"temp"}]}"""));
+        history.Add(null);
+        File.WriteAllText(path, history.ToJsonString());
+
+        var sessions = await _archive.GetSessionsAsync(CancellationToken.None);
+
+        Assert.Equal(good.Id, Assert.Single(sessions).Id);
+        Assert.True(File.Exists(path + ".broken"));
+    }
+
+    [Fact]
+    public async Task FreeExpiredAsync_KeepsFreeingWhenOneSessionCannotBeFreed()
+    {
+        Old(_cache.CreateFile("a.cache", 10));
+        var good = await CleanAsync();
+        var unusedDrive = Enumerable.Range('D', 'Z' - 'D' + 1).Select(letter => $"{(char)letter}:\\")
+            .First(root => !Directory.Exists(root));
+        var path = Path.Combine(_archiveRoot.RootPath, "history.json");
+        var history = JsonNode.Parse(File.ReadAllText(path))!.AsArray();
+        // Newer than the good session, so it is handled first; its drive does not exist.
+        history.Add(JsonNode.Parse($$"""
+            {"id":"bad-drive","cleanedAt":"2099-01-01T00:00:00+00:00","expiresAt":"2000-01-01T00:00:00+00:00",
+             "status":"restorable","locations":[{"index":0,"ruleId":"X","name":"X","path":{{JsonSerializer.Serialize(unusedDrive + "Temp")}},"sizeBytes":1,"fileCount":1}]}
+            """));
+        File.WriteAllText(path, history.ToJsonString());
+        _clock.Now = _clock.Now.AddDays(8);
+
+        var freed = await _archive.FreeExpiredAsync(CancellationToken.None);
+
+        Assert.Equal(10, freed);
+        Assert.Equal(CleaningSessionStatus.Freed, (await _archive.GetSessionsAsync(CancellationToken.None)).Single(session => session.Id == good.Id).Status);
     }
 
     [Theory]

@@ -104,9 +104,19 @@ public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogg
 
         foreach (var session in await GetSessionsAsync(cancellationToken))
         {
-            if (session.CanRestore && session.ExpiresAt <= now)
+            if (!session.CanRestore || session.ExpiresAt > now)
+            {
+                continue;
+            }
+
+            // One session that cannot be freed must not stop the others from giving their space back.
+            try
             {
                 freed += await FreeAsync(session.Id, cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.LogError(exception, "Could not free the archived session {Session}", session.Id);
             }
         }
 
@@ -273,7 +283,17 @@ public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogg
         try
         {
             await using var stream = File.OpenRead(HistoryPath);
-            return await JsonSerializer.DeserializeAsync<List<CleaningSession>>(stream, JsonOptions, cancellationToken) ?? [];
+            var sessions = await JsonSerializer.DeserializeAsync<List<CleaningSession?>>(stream, JsonOptions, cancellationToken) ?? [];
+
+            // A hand-edited or damaged entry is left out, never allowed to break everything else.
+            var valid = sessions.OfType<CleaningSession>().Where(IsWellFormed).ToList();
+            if (valid.Count != sessions.Count)
+            {
+                logger.LogError("{Count} unusable sessions were left out of the cleaning history", sessions.Count - valid.Count);
+                File.Copy(HistoryPath, HistoryPath + ".broken", overwrite: true);
+            }
+
+            return valid;
         }
         catch (JsonException exception)
         {
@@ -283,4 +303,11 @@ public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogg
             return [];
         }
     }
+
+    private static bool IsWellFormed(CleaningSession session) =>
+        !string.IsNullOrEmpty(session.Id)
+        && session.Id.IndexOfAny(['\\', '/', ':', '.']) < 0
+        && session.Locations is not null
+        && session.Locations.All(location =>
+            location is not null && !string.IsNullOrWhiteSpace(location.Path) && Path.IsPathFullyQualified(location.Path));
 }

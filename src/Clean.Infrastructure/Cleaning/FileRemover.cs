@@ -27,23 +27,31 @@ public sealed class FileRemover(
     {
         var stopwatch = Stopwatch.StartNew();
         var sessionId = archive.CreateSessionId();
-        var outcome = await Task.Run(() => Remove(sessionId, requests, ruleId, label, progress, stopwatch, cancellationToken), CancellationToken.None);
+        var outcome = new Outcome();
 
         CleaningSession? session = null;
-        if (outcome.RemovedFiles > 0)
+        try
         {
-            var now = clock.GetUtcNow();
-            session = new CleaningSession(
-                sessionId,
-                now,
-                now + CleaningSession.RetentionPeriod,
-                Path.GetPathRoot(requests[0].Path)?.TrimEnd('\\') ?? string.Empty,
-                outcome.RemovedBytes,
-                outcome.RemovedFiles,
-                outcome.Locations.Where(location => location.FileCount > 0).ToList(),
-                CleaningSessionStatus.Restorable,
-                null);
-            await archive.RecordAsync(session, CancellationToken.None);
+            await Task.Run(() => Remove(sessionId, requests, ruleId, label, progress, stopwatch, outcome, cancellationToken), CancellationToken.None);
+        }
+        finally
+        {
+            // Recorded even after an unexpected error: whatever was moved must stay restorable.
+            if (outcome.RemovedFiles > 0)
+            {
+                var now = clock.GetUtcNow();
+                session = new CleaningSession(
+                    sessionId,
+                    now,
+                    now + CleaningSession.RetentionPeriod,
+                    Path.GetPathRoot(requests[0].Path)?.TrimEnd('\\') ?? string.Empty,
+                    outcome.RemovedBytes,
+                    outcome.RemovedFiles,
+                    outcome.Locations.Where(location => location.FileCount > 0).ToList(),
+                    CleaningSessionStatus.Restorable,
+                    null);
+                await archive.RecordAsync(session, CancellationToken.None);
+            }
         }
 
         return new CleaningResult(
@@ -57,16 +65,16 @@ public sealed class FileRemover(
             session);
     }
 
-    private Outcome Remove(
+    private void Remove(
         string sessionId,
         IReadOnlyList<RemovalRequest> requests,
         string ruleId,
         string label,
         IProgress<CleaningProgress>? progress,
         Stopwatch stopwatch,
+        Outcome outcome,
         CancellationToken cancellationToken)
     {
-        var outcome = new Outcome();
         var requested = requests.Select(request => request.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var folders = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var lastReport = TimeSpan.Zero;
@@ -124,7 +132,6 @@ public sealed class FileRemover(
         }
 
         progress?.Report(new CleaningProgress(string.Empty, outcome.RemovedFiles, outcome.RemovedBytes));
-        return outcome;
     }
 
     // Everything the scan saw is checked again: the file must still be the one the user looked at.

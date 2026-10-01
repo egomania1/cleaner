@@ -60,8 +60,9 @@ public partial class App : Application
         {
             await Services.GetRequiredService<ICleaningArchive>().FreeExpiredAsync(CancellationToken.None);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception)
         {
+            // An exception leaving an async void method ends the app: this housekeeping must never do that.
             Services.GetRequiredService<ILogger<App>>().LogError(exception, "Could not free the expired archives");
         }
     }

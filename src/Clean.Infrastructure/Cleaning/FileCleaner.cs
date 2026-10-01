@@ -31,25 +31,31 @@ public sealed class FileCleaner(
     {
         var sessionId = archive.CreateSessionId();
         var run = new Run(progress, Stopwatch.StartNew());
-        var locations = await Task.Run(() => Clean(sessionId, decisions, run, cancellationToken), CancellationToken.None);
+        var locations = new List<CleaningSessionLocation>();
 
         CleaningSession? session = null;
-        if (run.RemovedFiles > 0)
+        try
         {
-            var now = clock.GetUtcNow();
-            session = new CleaningSession(
-                sessionId,
-                now,
-                now + CleaningSession.RetentionPeriod,
-                Path.GetPathRoot(decisions[0].Item.Path)?.TrimEnd('\\') ?? string.Empty,
-                run.RemovedBytes,
-                run.RemovedFiles,
-                locations.Where(location => location.FileCount > 0).ToList(),
-                CleaningSessionStatus.Restorable,
-                null);
-
-            // Recorded even after a cancellation: whatever was moved must stay restorable.
-            await archive.RecordAsync(session, CancellationToken.None);
+            await Task.Run(() => Clean(sessionId, decisions, locations, run, cancellationToken), CancellationToken.None);
+        }
+        finally
+        {
+            // Recorded even after a cancellation or an unexpected error: whatever was moved must stay restorable.
+            if (run.RemovedFiles > 0)
+            {
+                var now = clock.GetUtcNow();
+                session = new CleaningSession(
+                    sessionId,
+                    now,
+                    now + CleaningSession.RetentionPeriod,
+                    Path.GetPathRoot(decisions[0].Item.Path)?.TrimEnd('\\') ?? string.Empty,
+                    run.RemovedBytes,
+                    run.RemovedFiles,
+                    locations.Where(location => location.FileCount > 0).ToList(),
+                    CleaningSessionStatus.Restorable,
+                    null);
+                await archive.RecordAsync(session, CancellationToken.None);
+            }
         }
 
         return new CleaningResult(
@@ -63,10 +69,8 @@ public sealed class FileCleaner(
             session);
     }
 
-    private List<CleaningSessionLocation> Clean(string sessionId, IReadOnlyList<CleaningDecision> decisions, Run run, CancellationToken cancellationToken)
+    private void Clean(string sessionId, IReadOnlyList<CleaningDecision> decisions, List<CleaningSessionLocation> locations, Run run, CancellationToken cancellationToken)
     {
-        var locations = new List<CleaningSessionLocation>();
-
         foreach (var decision in decisions)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -94,18 +98,24 @@ public sealed class FileCleaner(
             var cutoff = clock.GetUtcNow().UtcDateTime - TimeSpan.FromDays(rule.MinimumAgeDays);
 
             var isTemporary = rule.Category == CleaningCategory.Temporary;
-            CleanFolder(folder, archive.GetLocationFolder(sessionId, index, folder.FullName), cutoff, isTemporary, run, cancellationToken);
-            locations.Add(new CleaningSessionLocation(
-                index,
-                rule.Id,
-                rule.Name,
-                folder.FullName,
-                run.RemovedBytes - bytesBefore,
-                run.RemovedFiles - filesBefore));
+            try
+            {
+                CleanFolder(folder, archive.GetLocationFolder(sessionId, index, folder.FullName), cutoff, isTemporary, run, cancellationToken);
+            }
+            finally
+            {
+                // Added even if the folder failed halfway: the files already moved belong to this location.
+                locations.Add(new CleaningSessionLocation(
+                    index,
+                    rule.Id,
+                    rule.Name,
+                    folder.FullName,
+                    run.RemovedBytes - bytesBefore,
+                    run.RemovedFiles - filesBefore));
+            }
         }
 
         run.Report(string.Empty);
-        return locations;
     }
 
     private void CleanFolder(DirectoryInfo folder, string archiveFolder, DateTime cutoff, bool isTemporary, Run run, CancellationToken cancellationToken)

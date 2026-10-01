@@ -69,3 +69,7 @@ Inspiration: composites.archi, toptier.relats.com, roiheads.com, reactbits.dev.
 - `GlassNavBar` replaces the NavigationView: floating glass bar centered at the top; only the selected tab shows its label (10 labelled tabs do not fit 960px), a glass block slides to it, labels are tooltips otherwise.
 - All animations respect the Windows "animation effects" setting.
 - Not done from the notes: 3D letters (roiheads), word-by-word scroll reveal, 21st.dev themes and awwwards review.
+
+## Audit (2026-10-01)
+
+See `AUDIT.md` at the repo root. Phase 2 step 1 (stability): S1 and S2 fixed (unreadable history entries are left out instead of crashing at startup, each expired session is freed on its own, the session is recorded even if cleaning fails halfway, in `FileCleaner` and `FileRemover`). Next: S3 (only fixed drives for removal), S4/S5 (parent links), Q1 (last-resort catch in commands), L4 (button wording). Payment and licences will live on a separate website, not in this app.

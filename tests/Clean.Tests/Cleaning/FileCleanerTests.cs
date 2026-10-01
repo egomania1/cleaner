@@ -1,3 +1,4 @@
+using Clean.Core.Interfaces;
 using Clean.Core.Models;
 using Clean.Core.Rules;
 using Clean.Core.Safety;
@@ -235,6 +236,26 @@ public sealed class FileCleanerTests : IDisposable
     }
 
     [Fact]
+    public async Task CleanAsync_StillRecordsTheSessionWhenALaterFolderFailsUnexpectedly()
+    {
+        using var second = new TestDirectory();
+        Old(_cache.CreateFile("a.tmp", 10));
+        Old(second.CreateFile("b.tmp", 10));
+        var first = Rule();
+        var other = first with { Id = "TEST_OTHER", Paths = [second.RootPath] };
+        var engine = new RuleEngine([first, other]);
+        var safety = new SafetyEngine(new PathValidator(engine, new ReparsePointDetector()), engine);
+        var decisions = new[] { first, other }.Select(rule => safety.Evaluate(Scanned(rule))).ToList();
+        var cleaner = new FileCleaner(safety, engine, new FailingArchive(_archive, failingIndex: 1), TimeProvider.System, NullLogger<FileCleaner>.Instance);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => cleaner.CleanAsync(decisions, null, CancellationToken.None));
+
+        var session = Assert.Single(await _archive.GetSessionsAsync(CancellationToken.None));
+        Assert.Equal(1, session.FileCount);
+        Assert.Equal(first.Id, Assert.Single(session.Locations).RuleId);
+    }
+
+    [Fact]
     public async Task CleanAsync_StopsWhenCancelledAndReportsIt()
     {
         var file = Old(_cache.CreateFile("cache.bin", 10));
@@ -273,4 +294,31 @@ public sealed class FileCleanerTests : IDisposable
 
     private Task<CleaningResult> CleanAsync(CleaningRule rule) =>
         Cleaner(rule).CleanAsync([Evaluate(rule)], null, CancellationToken.None);
+
+    // Behaves like the real archive until the given location, where it fails the way a bug or a bad path would.
+    private sealed class FailingArchive(ICleaningArchive inner, int failingIndex) : ICleaningArchive
+    {
+        public event Action? Changed
+        {
+            add => inner.Changed += value;
+            remove => inner.Changed -= value;
+        }
+
+        public string CreateSessionId() => inner.CreateSessionId();
+
+        public string GetLocationFolder(string sessionId, int locationIndex, string? locationPath = null) =>
+            locationIndex == failingIndex
+                ? throw new InvalidOperationException("Unexpected failure")
+                : inner.GetLocationFolder(sessionId, locationIndex, locationPath);
+
+        public Task RecordAsync(CleaningSession session, CancellationToken cancellationToken) => inner.RecordAsync(session, cancellationToken);
+
+        public Task<IReadOnlyList<CleaningSession>> GetSessionsAsync(CancellationToken cancellationToken) => inner.GetSessionsAsync(cancellationToken);
+
+        public Task<RestoreResult> RestoreAsync(string sessionId, CancellationToken cancellationToken) => inner.RestoreAsync(sessionId, cancellationToken);
+
+        public Task<long> FreeAsync(string sessionId, CancellationToken cancellationToken) => inner.FreeAsync(sessionId, cancellationToken);
+
+        public Task<long> FreeExpiredAsync(CancellationToken cancellationToken) => inner.FreeExpiredAsync(cancellationToken);
+    }
 }
