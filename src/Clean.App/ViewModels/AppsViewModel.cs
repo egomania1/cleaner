@@ -345,9 +345,13 @@ public sealed class AppsViewModel : ObservableObject
 
     private void ApplyUsages(IReadOnlyList<RunningAppUsage> usages)
     {
-        var byKey = usages.ToDictionary(usage => usage.Key, StringComparer.OrdinalIgnoreCase);
+        // Only programs with a visible window count as launched; services and helpers still weigh on the totals below.
+        var apps = usages
+            .Where(usage => usage.HasWindow && usage.Key is not UsageCalculator.WindowsKey and not UsageCalculator.ProtectedKey)
+            .ToList();
+        var byKey = apps.ToDictionary(usage => usage.Key, StringComparer.OrdinalIgnoreCase);
 
-        foreach (var usage in usages.Where(usage => !_items.ContainsKey(usage.Key)))
+        foreach (var usage in apps.Where(usage => !_items.ContainsKey(usage.Key)))
         {
             _items[usage.Key] = new AppItem(usage.Key, usage.DisplayName, null, null, null);
         }
@@ -372,7 +376,7 @@ public sealed class AppsViewModel : ObservableObject
 
         _totalCpu = Math.Min(100, usages.Sum(usage => usage.CpuPercent));
         _totalMemory = usages.Sum(usage => usage.MemoryBytes);
-        _runningCount = usages.Count(usage => usage.Key is not UsageCalculator.WindowsKey and not UsageCalculator.ProtectedKey);
+        _runningCount = apps.Count;
         Push(_cpuHistory, _totalCpu);
         Push(_memoryHistory, _totalMemory);
 

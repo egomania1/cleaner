@@ -9,4 +9,5 @@ public sealed record RunningAppUsage(
     string? ExecutablePath,
     double CpuPercent,
     long MemoryBytes,
-    int ProcessCount);
+    int ProcessCount,
+    bool HasWindow = false);

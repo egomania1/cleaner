@@ -59,7 +59,8 @@ public sealed class UsageCalculator
                     group.Select(entry => entry.Sample.ExecutablePath).FirstOrDefault(path => path is not null),
                     capacity > 0 ? Math.Clamp(cpuMilliseconds / capacity * 100, 0, 100) : 0,
                     group.Sum(entry => entry.Sample.MemoryBytes),
-                    group.Count());
+                    group.Count(),
+                    group.Any(entry => entry.Sample.HasWindow));
             })
             .ToList();
     }

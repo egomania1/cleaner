@@ -80,6 +80,16 @@ public class UsageCalculatorTests
     }
 
     [Fact]
+    public void Compute_FlagsAGroupAsHavingAWindowOnlyWhenOneProcessHasOne()
+    {
+        ProcessSample[] samples = [Chrome(1, 0, 10), Chrome(2, 0, 10) with { HasWindow = true }];
+        ProcessSample[] helpersOnly = [Chrome(3, 0, 10), Chrome(4, 0, 10)];
+
+        Assert.True(Assert.Single(Calculator.Compute([], samples, TimeSpan.FromSeconds(1), 1)).HasWindow);
+        Assert.False(Assert.Single(Calculator.Compute([], helpersOnly, TimeSpan.FromSeconds(1), 1)).HasWindow);
+    }
+
+    [Fact]
     public void Compute_CountsNoProcessorTimeWithoutAnEarlierMeasure()
     {
         var usage = Assert.Single(Calculator.Compute([], [Chrome(1, 50_000, 10)], TimeSpan.FromSeconds(1), 1));
