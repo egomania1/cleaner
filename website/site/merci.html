@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <title>Merci, ta licence Clean</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="./" aria-label="Clean, accueil">Clean</a>
+    </div>
+  </header>
+
+  <main id="contenu">
+    <section>
+      <div class="wrap prose">
+        <h1>Merci !</h1>
+        <p id="statut" class="lead" role="status" aria-live="polite">Cette page a besoin de JavaScript pour afficher ta clé.</p>
+
+        <div id="resultat" hidden>
+          <label for="cle"><strong>Ta clé de licence</strong></label>
+          <textarea id="cle" class="key-box" readonly spellcheck="false" autocomplete="off"></textarea>
+          <div class="actions">
+            <button id="copier" class="button" type="button">Copier la clé</button>
+          </div>
+          <p id="copie-ok" role="status" aria-live="polite"></p>
+
+          <h2>Pour l'activer</h2>
+          <ol>
+            <li>Ouvre Clean.</li>
+            <li>Va dans <strong>Paramètres</strong>, carte <strong>Licence</strong>.</li>
+            <li>Colle la clé, puis clique sur <strong>Activer</strong>.</li>
+          </ol>
+          <p>Garde cette clé : elle te servira si tu changes de PC. Elle n'expire pas.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <ul aria-label="Informations légales">
+        <li><a href="legal/mentions-legales.html">Mentions légales</a></li>
+        <li><a href="legal/cgv.html">Conditions de vente</a></li>
+        <li><a href="legal/confidentialite.html">Confidentialité</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script type="module" src="js/merci.js"></script>
+</body>
+</html>

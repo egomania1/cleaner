@@ -54,3 +54,7 @@ jobs:
       - name: Test the licence server
         working-directory: website/server
         run: node --test
+
+      - name: Test the static site
+        working-directory: website/site
+        run: node --test

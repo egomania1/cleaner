@@ -317,3 +317,27 @@ Répondre aux questions du §7, surtout Q1 (périmètre web), Q2 (modèle de pri
 ## 8. PHASE 2
 
 Je n'ai rien corrigé. Dis-moi quelles étapes tu valides (et tes réponses au §7), et je commence par l'**Étape 1** (stabilité), un correctif à la fois, avec explication, test et ton accord avant de continuer.
+
+---
+
+## 9. Mise à jour du 2026-10-01 (fin du travail autonome de la phase 2)
+
+Tout ce qui pouvait être fait sans compte, argent ni identité est fait. Le reste est dans `A-FAIRE-PAR-TOI.md`.
+
+| Point de l'audit | État |
+|---|---|
+| Sécurité de l'app : S1 à S8, S12, S13, S11 | **corrigés** (voir les lignes barrées plus haut) |
+| Q1, Q3, Q5, Q8 | **corrigés** ; Q4 CI **en place et verte sur GitHub** ; Q2 (tests de la couche écran) **non fait** ; Q9 **fait** (dépôt nettoyé, raccourci mis à jour) ; Q10 branche `main` conservée |
+| L4 (vocabulaire trompeur) | **corrigé** |
+| C1, P1 à P4 (paiement, licences, webhooks) | **code prêt et testé, non déployé** : `website/server` (27 tests) + vérification dans l'app (test croisé Node/C#). Manque : compte Stripe, hébergement, clés réelles |
+| P5 (contournement) | dissuasion raisonnable : jeton signé, vérification hors ligne ; l'essai peut être relancé en supprimant `trial.json` (accepté pour 3,90 €) |
+| P6, P7 (résiliation, renouvellement) | **sans objet** : achat unique, pas d'abonnement |
+| C3, L1 à L3, L5 à L8 | **modèles écrits** (`website/site/legal/`), **à compléter et faire valider** ; le site n'utilise aucun cookie ni traceur |
+| W1 (site responsive) | **fait** : `website/site`, vérifié à 320/360/768/1280 px, 44 px au toucher, contrastes AA mesurés, mode sombre et clair |
+| W2, W3 (accessibilité de l'app) | partiel : noms et graphiques corrigés, vérifié à 960 px ; Narrateur, 125-200 % et contrastes de l'app **à tester par le propriétaire** |
+| C2, C4 (signature, installateur, mise à jour) | **non fait** : demande une identité éditeur ou un certificat. Marche à suivre dans `docs/MSIX.md` |
+| Section 8 (comparaison marché) | inchangée : démarrage, désinstalleur avec restes, allègement Windows 11, test de compatibilité Windows 11, maintenance automatique **non faits** |
+
+**Verdict mis à jour : Pas encore.** L'app et le code de vente sont prêts techniquement ; il reste les éléments
+d'identité et de paiement (statut, Stripe, domaine, textes légaux validés, signature) et des fonctions face au marché.
+

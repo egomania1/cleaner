@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /merci.html
+# Remplace par ton domaine quand il existe:
+# Sitemap: https://ton-domaine/sitemap.xml
