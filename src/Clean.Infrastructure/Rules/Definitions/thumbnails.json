@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "THUMBNAIL_CACHE",
+      "name": "Cache des miniatures et des icônes",
+      "description": "Aperçus d'images et d'icônes gardés par l'Explorateur. Windows les recrée tout seul, mais les dossiers pleins d'images mettent un moment à se réafficher. Les fichiers en cours d'utilisation par l'Explorateur sont gardés.",
+      "category": "thumbnails",
+      "risk": "caution",
+      "paths": ["%LOCALAPPDATA%\\Microsoft\\Windows\\Explorer"],
+      "minimumAgeDays": 0,
+      "automaticCleaningAllowed": false
+    }
+  ]
+}

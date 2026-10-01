@@ -7,7 +7,10 @@
       "description": "Rapports envoyés ou en attente d'envoi à Microsoft après un plantage. Inutiles une fois envoyés.",
       "category": "crashDumps",
       "risk": "safe",
-      "paths": ["%PROGRAMDATA%\\Microsoft\\Windows\\WER", "%LOCALAPPDATA%\\Microsoft\\Windows\\WER"],
+      "paths": [
+        "%PROGRAMDATA%\\Microsoft\\Windows\\WER",
+        "%LOCALAPPDATA%\\Microsoft\\Windows\\WER"
+      ],
       "minimumAgeDays": 7,
       "automaticCleaningAllowed": true
     },
@@ -17,7 +20,22 @@
       "description": "Copies de la mémoire enregistrées quand une application a planté. Utiles seulement pour un diagnostic.",
       "category": "crashDumps",
       "risk": "safe",
-      "paths": ["%LOCALAPPDATA%\\CrashDumps"],
+      "paths": [
+        "%LOCALAPPDATA%\\CrashDumps"
+      ],
+      "minimumAgeDays": 7,
+      "automaticCleaningAllowed": true
+    },
+    {
+      "id": "WINDOWS_MINIDUMPS",
+      "name": "Rapports de plantage de Windows",
+      "description": "Copies de la mémoire enregistrées lors d'un écran bleu. Utiles seulement pour diagnostiquer le plantage. Les fichiers réservés à l'administrateur sont gardés.",
+      "category": "crashDumps",
+      "risk": "safe",
+      "paths": [
+        "%WINDIR%\\Minidump",
+        "%WINDIR%\\LiveKernelReports"
+      ],
       "minimumAgeDays": 7,
       "automaticCleaningAllowed": true
     }

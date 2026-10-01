@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "WINDOWS_UPDATE_LOGS",
+      "name": "Journaux de Windows Update",
+      "description": "Traces techniques des mises à jour passées. Utiles seulement pour diagnostiquer un échec de mise à jour. Les fichiers réservés à l'administrateur sont gardés.",
+      "category": "logs",
+      "risk": "safe",
+      "paths": ["%WINDIR%\\Logs\\WindowsUpdate"],
+      "minimumAgeDays": 7,
+      "automaticCleaningAllowed": true
+    },
+    {
+      "id": "DISM_LOGS",
+      "name": "Journaux DISM",
+      "description": "Traces des outils de réparation et de maintenance de Windows. Utiles seulement à un technicien. Les fichiers réservés à l'administrateur sont gardés.",
+      "category": "logs",
+      "risk": "safe",
+      "paths": ["%WINDIR%\\Logs\\DISM"],
+      "minimumAgeDays": 7,
+      "automaticCleaningAllowed": true
+    }
+  ]
+}
