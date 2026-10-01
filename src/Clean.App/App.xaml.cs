@@ -3,6 +3,7 @@ using Clean.App.ViewModels;
 using Clean.Core.Browsers;
 using Clean.Core.Files;
 using Clean.Core.Interfaces;
+using Clean.Core.Logging;
 using Clean.Core.Models;
 using Clean.Core.Rules;
 using Clean.Core.Safety;
@@ -10,6 +11,7 @@ using Clean.Core.Scanning;
 using Clean.Infrastructure.Browsers;
 using Clean.Infrastructure.Cleaning;
 using Clean.Infrastructure.FileSystem;
+using Clean.Infrastructure.Logging;
 using Clean.Infrastructure.Rules;
 using Clean.Infrastructure.Scanning;
 using Clean.Infrastructure.Windows;
@@ -21,6 +23,8 @@ namespace Clean.App;
 
 public partial class App : Application
 {
+    private const long MaximumCrashLogBytes = 1024 * 1024;
+
     private Window? _mainWindow;
 
     public App()
@@ -29,14 +33,22 @@ public partial class App : Application
         UnhandledException += (_, e) => WriteCrashLog(e.Exception);
     }
 
-    // The Debug logger is invisible outside Visual Studio; a crash leaves this file behind instead.
+    // A crash may leave no time for the regular logger, so it also leaves this file behind.
     private static void WriteCrashLog(Exception exception)
     {
         try
         {
             var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Clean");
             Directory.CreateDirectory(folder);
-            File.AppendAllText(Path.Combine(folder, "crash.log"), $"{DateTimeOffset.Now:O}{Environment.NewLine}{exception}{Environment.NewLine}{Environment.NewLine}");
+
+            var path = Path.Combine(folder, "crash.log");
+            if (File.Exists(path) && new FileInfo(path).Length > MaximumCrashLogBytes)
+            {
+                File.Move(path, path + ".old", overwrite: true);
+            }
+
+            var text = $"{DateTimeOffset.Now:O}{Environment.NewLine}{exception}{Environment.NewLine}{Environment.NewLine}";
+            File.AppendAllText(path, LogSanitizer.ForCurrentUser().Clean(text));
         }
         catch (Exception logFailure) when (logFailure is IOException or UnauthorizedAccessException)
         {
@@ -71,7 +83,11 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
 
-        services.AddLogging(builder => builder.AddDebug());
+        services.AddLogging(builder =>
+        {
+            builder.AddDebug();
+            builder.AddProvider(new FileLoggerProvider(FileLoggerProvider.DefaultFolder, LogSanitizer.ForCurrentUser(), TimeProvider.System));
+        });
 
         services.AddSingleton<IDiskService, DiskService>();
         services.AddSingleton<IStorageAnalyzer, StorageAnalyzer>();
