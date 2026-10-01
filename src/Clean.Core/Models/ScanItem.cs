@@ -12,4 +12,5 @@ public sealed record ScanItem(
     bool CanClean,
     bool RequiresConfirmation,
     long FileCount,
-    long SkippedFileCount);
+    long SkippedFileCount,
+    IReadOnlyList<KeptFiles>? KeptFiles = null);

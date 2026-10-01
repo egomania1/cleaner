@@ -1,4 +1,5 @@
 using Clean.Core.Models;
+using Clean.Infrastructure.FileSystem;
 using Clean.Infrastructure.Scanning;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -106,7 +107,7 @@ public sealed class KnownLocationScannerTests : IDisposable
     }
 
     private Task<IReadOnlyList<ScanItem>> ScanAsync(CleaningRule rule, string? driveRoot = null) =>
-        new KnownLocationScanner([rule], TimeProvider.System, NullLogger<KnownLocationScanner>.Instance)
+        new KnownLocationScanner([rule], new ReparsePointDetector(), TimeProvider.System, NullLogger<KnownLocationScanner>.Instance)
             .ScanAsync(driveRoot ?? Path.GetPathRoot(_cache.RootPath)!, null, CancellationToken.None);
 
     private CleaningRule Rule(int minimumAgeDays = 0, RiskLevel risk = RiskLevel.Safe) =>

@@ -18,7 +18,7 @@ Last update: 2026-09-30. Branch: `winui`. The original Electron app is still on 
 src/Clean.Core            models, interfaces, rules, formatting, location/app knowledge (no Windows dependency)
 src/Clean.Infrastructure  disks, file system walks, registry, Explorer, scanners
 src/Clean.App             WinUI 3 UI: Views, ViewModels, Controls, Themes, Converters, Services
-tests/Clean.Tests         xUnit tests (236 passing)
+tests/Clean.Tests         xUnit tests (288 passing)
 ```
 
 ## Phases (from the DeepClean master prompt, app name kept as "Clean")
@@ -32,8 +32,10 @@ tests/Clean.Tests         xUnit tests (236 passing)
 | 4 Scan engine | done | ScanManager, StorageAnalyzer, Stockage page with SegmentedProgress + PolarChart |
 | 5 Dry run | done | KnownLocationScanner + BuiltInRules (C#), Nettoyage page, dashboard "Nettoyable" card |
 | 6 Rule engine (JSON) | done | `Infrastructure/Rules/Definitions/*.json` copied to `Rules/` next to the exe; `JsonRuleLoader` skips and logs broken or unsafe rules; `RuleValidator` (id, texts, risk, env-var-only paths, protected folders); `RuleEngine.FindRuleFor` |
-| 7 | **next** | see the master prompt |
-| 8 – 38 | todo | see the master prompt |
+| 7 Safety engine | done | `ProtectedPathService` (shared protected-folder list, also used by `RuleValidator`); `PathValidator` (replaces `RulePathValidator`: deny by default, rejects `.`/`..`, UNC and `\\?\` paths, `/`, alternate streams, drive roots, protected folders, non-rule folders, and any link on the way); `ReparsePointDetector` (Infrastructure) walks every folder from the drive down, so a junctioned *parent* is caught too; `RiskAnalyzer` gives the final SAFE/CAUTION/EXPERT/BLOCKED. Real-junction tests: link inside a rule folder, rule folder itself a junction, junctioned parent with a forged decision. |
+| 8 Temp scanner | done | `TempScanner` handles the `temporary` rules (`KnownLocationScanner` the others, split in `App.xaml.cs`). Per file: size, age, attributes, `TempFilePolicy` (keeps system files, cloud placeholders, files newer than the rule's `minimumAgeDays`, and documents/photos/videos/music that may be the only copy of an opened attachment) and `FileMoveProbe` (opens with DELETE access only: in use / reserved to admin; a read open made the antivirus scan every file, 65 s vs 1.6 s on 27k files). `ScanItem.KeptFiles` lists kept files per reason, shown on each Nettoyage card. `FileCleaner` applies the same policy to temporary folders. `RuleFolders` (shared by both scanners) now skips any folder with a link on its path. |
+| 9 Windows cleaner | **next** | see the master prompt |
+| 10 – 38 | todo | see the master prompt |
 
 ## Extra work done on request (outside the phase order)
 

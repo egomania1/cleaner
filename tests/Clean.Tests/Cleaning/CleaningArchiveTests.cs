@@ -2,6 +2,7 @@ using Clean.Core.Models;
 using Clean.Core.Rules;
 using Clean.Core.Safety;
 using Clean.Infrastructure.Cleaning;
+using Clean.Infrastructure.FileSystem;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Clean.Tests.Cleaning;
@@ -145,7 +146,7 @@ public sealed class CleaningArchiveTests : IDisposable
     {
         var rule = new CleaningRule("TEST_CACHE", "Test cache", "Rebuilt.", CleaningCategory.ApplicationCache, RiskLevel.Safe, [_cache.RootPath], 0, true);
         var engine = new RuleEngine([rule]);
-        var safety = new SafetyEngine(new RulePathValidator(engine), engine);
+        var safety = new SafetyEngine(new PathValidator(engine, new ReparsePointDetector()), engine);
         var cleaner = new FileCleaner(safety, engine, _archive, _clock, NullLogger<FileCleaner>.Instance);
         var item = new ScanItem(_cache.RootPath, rule.Name, 1, rule.Category, rule.Risk, rule.Description, rule.Id, null, true, false, 1, 0);
 

@@ -12,7 +12,7 @@ public class SafetyEngineTests
         [new CleaningRule("NVIDIA_DX", "Cache", "Rebuilt.", CleaningCategory.GpuCache, RiskLevel.Safe, [@"%LOCALAPPDATA%\NVIDIA\DXCache"], 0, true)],
         Expand);
 
-    private static readonly SafetyEngine Safety = new(new RulePathValidator(Engine, Expand), Engine);
+    private static readonly SafetyEngine Safety = new(new PathValidator(Engine, new NoLinks(), Expand), Engine);
 
     [Fact]
     public void Evaluate_AllowsAnItemThatMatchesItsRuleFolder()
@@ -44,7 +44,7 @@ public class SafetyEngineTests
         var riskier = new RuleEngine(
             [new CleaningRule("NVIDIA_DX", "Cache", "Rebuilt.", CleaningCategory.GpuCache, RiskLevel.Expert, [@"%LOCALAPPDATA%\NVIDIA\DXCache"], 0, false)],
             Expand);
-        var safety = new SafetyEngine(new RulePathValidator(riskier, Expand), riskier);
+        var safety = new SafetyEngine(new PathValidator(riskier, new NoLinks(), Expand), riskier);
 
         Assert.False(safety.Evaluate(Item(CacheFolder)).IsAllowed);
     }

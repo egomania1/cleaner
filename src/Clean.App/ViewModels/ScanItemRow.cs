@@ -63,5 +63,17 @@ public sealed class ScanItemRow : ObservableObject
 
     public bool HasSkippedFiles => Item.SkippedFileCount > 0;
 
-    public string SkippedText => $"{Item.SkippedFileCount.ToString("N0", French)} fichiers récents gardés, ils peuvent encore servir";
+    public string SkippedText => Item.KeptFiles is { Count: > 0 } kept
+        ? "Gardés : " + string.Join(" · ", kept.Select(group => $"{group.FileCount.ToString("N0", French)} {Describe(group.Reason)} ({ByteSize.Format(group.SizeBytes)})"))
+        : $"{Item.SkippedFileCount.ToString("N0", French)} fichiers récents gardés, ils peuvent encore servir";
+
+    private static string Describe(KeptFileReason reason) => reason switch
+    {
+        KeptFileReason.TooRecent => "récents, ils peuvent encore servir",
+        KeptFileReason.InUse => "ouverts dans une application",
+        KeptFileReason.Inaccessible => "réservés à Windows ou à un administrateur",
+        KeptFileReason.SystemFile => "marqués « système »",
+        KeptFileReason.CloudFile => "restés dans le cloud",
+        _ => "documents, photos ou vidéos, peut-être ta seule copie",
+    };
 }

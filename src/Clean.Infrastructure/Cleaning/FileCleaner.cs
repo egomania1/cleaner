@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Clean.Core.Interfaces;
 using Clean.Core.Models;
+using Clean.Core.Scanning;
 using Microsoft.Extensions.Logging;
 
 namespace Clean.Infrastructure.Cleaning;
@@ -92,7 +93,8 @@ public sealed class FileCleaner(
             var filesBefore = run.RemovedFiles;
             var cutoff = clock.GetUtcNow().UtcDateTime - TimeSpan.FromDays(rule.MinimumAgeDays);
 
-            CleanFolder(folder, archive.GetLocationFolder(sessionId, index, folder.FullName), cutoff, run, cancellationToken);
+            var isTemporary = rule.Category == CleaningCategory.Temporary;
+            CleanFolder(folder, archive.GetLocationFolder(sessionId, index, folder.FullName), cutoff, isTemporary, run, cancellationToken);
             locations.Add(new CleaningSessionLocation(
                 index,
                 rule.Id,
@@ -106,7 +108,7 @@ public sealed class FileCleaner(
         return locations;
     }
 
-    private void CleanFolder(DirectoryInfo folder, string archiveFolder, DateTime cutoff, Run run, CancellationToken cancellationToken)
+    private void CleanFolder(DirectoryInfo folder, string archiveFolder, DateTime cutoff, bool isTemporary, Run run, CancellationToken cancellationToken)
     {
         List<FileInfo> files;
         try
@@ -127,13 +129,13 @@ public sealed class FileCleaner(
                 return;
             }
 
-            ArchiveFile(file, Path.Combine(archiveFolder, Path.GetRelativePath(folder.FullName, file.FullName)), cutoff, run);
+            ArchiveFile(file, Path.Combine(archiveFolder, Path.GetRelativePath(folder.FullName, file.FullName)), cutoff, isTemporary, run);
         }
 
         DeleteEmptySubfolders(folder, cutoff);
     }
 
-    private static void ArchiveFile(FileInfo file, string destination, DateTime cutoff, Run run)
+    private static void ArchiveFile(FileInfo file, string destination, DateTime cutoff, bool isTemporary, Run run)
     {
         try
         {
@@ -147,6 +149,12 @@ public sealed class FileCleaner(
             if (file.LastWriteTimeUtc > cutoff)
             {
                 run.KeptRecentFiles++;
+                return;
+            }
+
+            // The scan left these out of the total, so they must not be removed either.
+            if (isTemporary && TempFilePolicy.FindReasonToKeep(file.Name, file.Attributes, file.LastWriteTimeUtc, cutoff) is not null)
+            {
                 return;
             }
 

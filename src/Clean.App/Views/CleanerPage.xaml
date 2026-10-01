@@ -317,6 +317,8 @@
                                                 FontSize="12"
                                                 Foreground="{StaticResource MutedTextBrush}"
                                                 Text="{x:Bind SkippedText}"
+                                                TextAlignment="Right"
+                                                TextWrapping="Wrap"
                                                 Visibility="{x:Bind HasSkippedFiles}" />
                                         </StackPanel>
                                     </Grid>

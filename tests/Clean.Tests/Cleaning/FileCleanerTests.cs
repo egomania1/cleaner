@@ -2,6 +2,7 @@ using Clean.Core.Models;
 using Clean.Core.Rules;
 using Clean.Core.Safety;
 using Clean.Infrastructure.Cleaning;
+using Clean.Infrastructure.FileSystem;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Clean.Tests.Cleaning;
@@ -97,6 +98,19 @@ public sealed class FileCleanerTests : IDisposable
     }
 
     [Fact]
+    public async Task CleanAsync_KeepsPersonalFilesInTemporaryFolders()
+    {
+        var leftover = Old(_cache.CreateFile("setup.log", 10));
+        var attachment = Old(_cache.CreateFile("contrat.pdf", 10));
+
+        var result = await CleanAsync(Rule() with { Category = CleaningCategory.Temporary });
+
+        Assert.False(File.Exists(leftover));
+        Assert.True(File.Exists(attachment));
+        Assert.Equal(1, result.RemovedFileCount);
+    }
+
+    [Fact]
     public async Task CleanAsync_CountsFilesHeldOpenAsLockedAndKeepsThem()
     {
         var file = Old(_cache.CreateFile("open.log", 10));
@@ -125,6 +139,49 @@ public sealed class FileCleanerTests : IDisposable
 
             Assert.True(File.Exists(thesis));
             Assert.True(Directory.Exists(Path.Combine(_cache.RootPath, "DocumentsLink")));
+        }
+        finally
+        {
+            documents.Dispose();
+        }
+    }
+
+    [Fact]
+    public async Task CleanAsync_RefusesARuleFolderThatIsItselfAJunction()
+    {
+        var documents = new TestDirectory();
+        try
+        {
+            var thesis = Old(documents.CreateFile("thesis.docx", 5_000));
+            _cache.CreateJunction("Cache", documents.RootPath);
+            var rule = Rule() with { Paths = [Path.Combine(_cache.RootPath, "Cache")] };
+
+            var result = await CleanAsync(rule);
+
+            Assert.True(File.Exists(thesis));
+            Assert.Equal(0, result.RemovedFileCount);
+        }
+        finally
+        {
+            documents.Dispose();
+        }
+    }
+
+    [Fact]
+    public async Task CleanAsync_RefusesARuleFolderReachedThroughAJunctionedParent()
+    {
+        var documents = new TestDirectory();
+        try
+        {
+            var thesis = Old(documents.CreateFile(@"Cache\thesis.docx", 5_000));
+            _cache.CreateJunction("App", documents.RootPath);
+            var rule = Rule() with { Paths = [Path.Combine(_cache.RootPath, "App", "Cache")] };
+            var forged = CleaningDecision.Allow(Scanned(rule), "Forged");
+
+            var result = await Cleaner(rule).CleanAsync([forged], null, CancellationToken.None);
+
+            Assert.True(File.Exists(thesis));
+            Assert.Equal(0, result.RemovedFileCount);
         }
         finally
         {
@@ -199,19 +256,19 @@ public sealed class FileCleanerTests : IDisposable
     private CleaningRule Rule(int minimumAgeDays = 0) =>
         new("TEST_CACHE", "Test cache", "Rebuilt automatically.", CleaningCategory.ApplicationCache, RiskLevel.Safe, [_cache.RootPath], minimumAgeDays, true);
 
-    private ScanItem Scanned(CleaningRule rule) =>
-        new(_cache.RootPath, rule.Name, 1, rule.Category, rule.Risk, rule.Description, rule.Id, null, true, false, 1, 0);
+    private static ScanItem Scanned(CleaningRule rule) =>
+        new(rule.Paths[0], rule.Name, 1, rule.Category, rule.Risk, rule.Description, rule.Id, null, true, false, 1, 0);
 
     private CleaningDecision Evaluate(CleaningRule rule)
     {
         var engine = new RuleEngine([rule]);
-        return new SafetyEngine(new RulePathValidator(engine), engine).Evaluate(Scanned(rule));
+        return new SafetyEngine(new PathValidator(engine, new ReparsePointDetector()), engine).Evaluate(Scanned(rule));
     }
 
     private FileCleaner Cleaner(CleaningRule rule)
     {
         var engine = new RuleEngine([rule]);
-        return new FileCleaner(new SafetyEngine(new RulePathValidator(engine), engine), engine, _archive, TimeProvider.System, NullLogger<FileCleaner>.Instance);
+        return new FileCleaner(new SafetyEngine(new PathValidator(engine, new ReparsePointDetector()), engine), engine, _archive, TimeProvider.System, NullLogger<FileCleaner>.Instance);
     }
 
     private Task<CleaningResult> CleanAsync(CleaningRule rule) =>

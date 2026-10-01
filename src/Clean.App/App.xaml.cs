@@ -2,6 +2,7 @@ using Clean.App.Services;
 using Clean.App.ViewModels;
 using Clean.Core.Files;
 using Clean.Core.Interfaces;
+using Clean.Core.Models;
 using Clean.Core.Rules;
 using Clean.Core.Safety;
 using Clean.Core.Scanning;
@@ -83,13 +84,22 @@ public partial class App : Application
         services.AddSingleton<IRuleEngine>(provider =>
             new RuleEngine(provider.GetRequiredService<JsonRuleLoader>().Load(JsonRuleLoader.DefaultFolder).Rules));
 
+        services.AddSingleton<IReparsePointDetector, ReparsePointDetector>();
+        services.AddSingleton<IScanner>(provider => new TempScanner(
+            RulesWhere(provider, rule => rule.Category == CleaningCategory.Temporary),
+            provider.GetRequiredService<IReparsePointDetector>(),
+            provider.GetRequiredService<TimeProvider>(),
+            provider.GetRequiredService<ILogger<TempScanner>>()));
         services.AddSingleton<IScanner>(provider => new KnownLocationScanner(
-            provider.GetRequiredService<IRuleEngine>().Rules,
+            RulesWhere(provider, rule => rule.Category != CleaningCategory.Temporary),
+            provider.GetRequiredService<IReparsePointDetector>(),
             provider.GetRequiredService<TimeProvider>(),
             provider.GetRequiredService<ILogger<KnownLocationScanner>>()));
         services.AddSingleton<IScanManager, ScanManager>();
 
-        services.AddSingleton<IPathValidator>(provider => new RulePathValidator(provider.GetRequiredService<IRuleEngine>()));
+        services.AddSingleton<IPathValidator>(provider => new PathValidator(
+            provider.GetRequiredService<IRuleEngine>(),
+            provider.GetRequiredService<IReparsePointDetector>()));
         services.AddSingleton<ISafetyEngine, SafetyEngine>();
         services.AddSingleton<ICleaningArchive>(provider => new CleaningArchive(
             CleaningArchive.DefaultFolder,
@@ -113,4 +123,7 @@ public partial class App : Application
 
         return services.BuildServiceProvider();
     }
+
+    private static List<CleaningRule> RulesWhere(IServiceProvider provider, Func<CleaningRule, bool> predicate) =>
+        provider.GetRequiredService<IRuleEngine>().Rules.Where(predicate).ToList();
 }
