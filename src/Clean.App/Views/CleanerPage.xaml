@@ -36,6 +36,7 @@
                         MinWidth="340"
                         VerticalAlignment="Center"
                         IsEnabled="{x:Bind ViewModel.CanChangeDisk, Mode=OneWay}"
+                        AutomationProperties.Name="Disque à analyser"
                         ItemsSource="{x:Bind ViewModel.Disks}"
                         SelectedIndex="{x:Bind ViewModel.SelectedDiskIndex, Mode=TwoWay}">
                         <ComboBox.ItemTemplate>

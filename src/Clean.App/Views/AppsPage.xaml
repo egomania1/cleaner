@@ -130,7 +130,11 @@
                                 </Grid>
                                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.Groups, Mode=OneWay}">
                                     <ItemsRepeater.Layout>
-                                        <StackLayout Orientation="Horizontal" Spacing="16" />
+                                        <UniformGridLayout
+                                            ItemsJustification="Start"
+                                            MinColumnSpacing="16"
+                                            MinItemWidth="190"
+                                            MinRowSpacing="6" />
                                     </ItemsRepeater.Layout>
                                     <ItemsRepeater.ItemTemplate>
                                         <DataTemplate x:DataType="viewmodels:GroupShareRow">
@@ -151,6 +155,8 @@
                                     </ItemsRepeater.ItemTemplate>
                                 </ItemsRepeater>
                                 <controls:TreemapChart
+                                    AutomationProperties.HelpText="La liste de toutes les applications, plus bas, donne les mêmes informations et se parcourt au clavier."
+                                    AutomationProperties.Name="Carte de l'espace disque par application"
                                     x:Name="Treemap"
                                     Height="440"
                                     SelectedKey="{x:Bind ViewModel.SelectedKey, Mode=OneWay}"
@@ -232,6 +238,8 @@
                                     Height="200"
                                     Capacity="60"
                                     IntervalSeconds="1.5"
+                                    AutomationProperties.HelpText="La valeur actuelle est écrite à côté du graphique."
+                                    AutomationProperties.Name="Processeur utilisé par tous les programmes, dernière minute"
                                     Kind="Percent"
                                     Values="{x:Bind ViewModel.CpuHistory, Mode=OneWay}" />
                             </StackPanel>
@@ -256,6 +264,8 @@
                                     Height="200"
                                     Capacity="60"
                                     IntervalSeconds="1.5"
+                                    AutomationProperties.HelpText="La valeur actuelle est écrite à côté du graphique."
+                                    AutomationProperties.Name="Mémoire utilisée par tous les programmes, dernière minute"
                                     Kind="Bytes"
                                     Maximum="{x:Bind ViewModel.MemoryMaximum}"
                                     Values="{x:Bind ViewModel.MemoryHistory, Mode=OneWay}" />
@@ -296,10 +306,10 @@
 
                                 <Grid Padding="14,0" ColumnSpacing="16">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="130" />
-                                        <ColumnDefinition Width="90" />
-                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="*" MinWidth="120" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="84" />
+                                        <ColumnDefinition Width="84" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Style="{StaticResource ColumnHeaderStyle}" Text="APPLICATION" />
                                     <TextBlock Grid.Column="1" Style="{StaticResource ColumnHeaderStyle}" Text="PROCESSEUR" />
@@ -324,10 +334,10 @@
                                                 Tag="{x:Bind Key}">
                                                 <Grid ColumnSpacing="16">
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="130" />
-                                                        <ColumnDefinition Width="90" />
-                                                        <ColumnDefinition Width="120" />
+                                                        <ColumnDefinition Width="*" MinWidth="120" />
+                                                        <ColumnDefinition Width="80" />
+                                                        <ColumnDefinition Width="84" />
+                                                        <ColumnDefinition Width="84" />
                                                     </Grid.ColumnDefinitions>
                                                     <Grid VerticalAlignment="Center" ColumnSpacing="10">
                                                         <Grid.ColumnDefinitions>
@@ -373,6 +383,7 @@
                                                         Grid.Column="3"
                                                         Height="28"
                                                         Capacity="40"
+                                                        AutomationProperties.AccessibilityView="Raw"
                                                         Maximum="{x:Bind CpuHistoryMaximum, Mode=OneWay}"
                                                         Values="{x:Bind CpuHistory, Mode=OneWay}" />
                                                 </Grid>
@@ -459,6 +470,8 @@
                                                 Height="130"
                                                 Capacity="40"
                                                 IntervalSeconds="1.5"
+                                                AutomationProperties.HelpText="La valeur actuelle est écrite à côté du graphique."
+                                                AutomationProperties.Name="Processeur utilisé par l'application choisie, dernière minute"
                                                 Kind="Percent"
                                                 Values="{x:Bind ViewModel.SelectedApp.CpuHistory, Mode=OneWay}" />
                                             <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="MÉMOIRE, DERNIÈRE MINUTE" />
@@ -466,6 +479,8 @@
                                                 Height="130"
                                                 Capacity="40"
                                                 IntervalSeconds="1.5"
+                                                AutomationProperties.HelpText="La valeur actuelle est écrite à côté du graphique."
+                                                AutomationProperties.Name="Mémoire utilisée par l'application choisie, dernière minute"
                                                 Kind="Bytes"
                                                 Maximum="{x:Bind ViewModel.SelectedApp.MemoryHistoryMaximum, Mode=OneWay}"
                                                 Values="{x:Bind ViewModel.SelectedApp.MemoryHistory, Mode=OneWay}" />
@@ -539,6 +554,7 @@
                                     Grid.Column="2"
                                     HorizontalAlignment="Stretch"
                                     VerticalAlignment="Center"
+                                    AutomationProperties.Name="Trier les applications"
                                     ItemsSource="{x:Bind ViewModel.SortOptions}"
                                     SelectedIndex="{x:Bind ViewModel.SortIndex, Mode=TwoWay}" />
                             </Grid>

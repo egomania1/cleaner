@@ -140,7 +140,7 @@
 
     <Style x:Key="KpiValueStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="Bahnschrift" />
-        <Setter Property="FontSize" Value="40" />
+        <Setter Property="FontSize" Value="34" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}" />
     </Style>

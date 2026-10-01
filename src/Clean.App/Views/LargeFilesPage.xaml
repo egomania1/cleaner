@@ -72,6 +72,7 @@
                         MinWidth="340"
                         VerticalAlignment="Center"
                         IsEnabled="{x:Bind ViewModel.CanChangeSettings, Mode=OneWay}"
+                        AutomationProperties.Name="Disque à analyser"
                         ItemsSource="{x:Bind ViewModel.Disks}"
                         SelectedIndex="{x:Bind ViewModel.SelectedDiskIndex, Mode=TwoWay}">
                         <ComboBox.ItemTemplate>
@@ -85,6 +86,7 @@
                         MinWidth="220"
                         VerticalAlignment="Center"
                         IsEnabled="{x:Bind ViewModel.CanChangeSettings, Mode=OneWay}"
+                        AutomationProperties.Name="Taille minimale des fichiers"
                         ItemsSource="{x:Bind ViewModel.SizeOptions}"
                         SelectedIndex="{x:Bind ViewModel.SelectedSizeIndex, Mode=TwoWay}" />
                     <controls:ShinyButton
@@ -183,7 +185,11 @@
                                 </StackPanel>
                                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.ByCategory, Mode=OneWay}">
                                     <ItemsRepeater.Layout>
-                                        <StackLayout Orientation="Horizontal" Spacing="16" />
+                                        <UniformGridLayout
+                                            ItemsJustification="Start"
+                                            MinColumnSpacing="16"
+                                            MinItemWidth="190"
+                                            MinRowSpacing="6" />
                                     </ItemsRepeater.Layout>
                                     <ItemsRepeater.ItemTemplate>
                                         <DataTemplate x:DataType="viewmodels:ShareRow">
@@ -206,6 +212,8 @@
                                 <controls:TreemapChart
                                     Height="420"
                                     SelectedKey="{x:Bind ViewModel.FocusedKey, Mode=OneWay}"
+                                    AutomationProperties.HelpText="La liste de tous les gros fichiers, plus bas, donne les mêmes informations et se parcourt au clavier."
+                                    AutomationProperties.Name="Carte des plus gros fichiers"
                                     TileSelected="OnTileSelected"
                                     Tiles="{x:Bind ViewModel.Tiles, Mode=OneWay}" />
                             </StackPanel>
@@ -397,12 +405,14 @@
                                     Grid.Column="1"
                                     HorizontalAlignment="Stretch"
                                     VerticalAlignment="Center"
+                                    AutomationProperties.Name="Filtrer par type de fichier"
                                     ItemsSource="{x:Bind ViewModel.CategoryOptions, Mode=OneWay}"
                                     SelectedIndex="{x:Bind ViewModel.CategoryIndex, Mode=TwoWay}" />
                                 <ComboBox
                                     Grid.Column="2"
                                     HorizontalAlignment="Stretch"
                                     VerticalAlignment="Center"
+                                    AutomationProperties.Name="Trier les fichiers"
                                     ItemsSource="{x:Bind ViewModel.SortOptions}"
                                     SelectedIndex="{x:Bind ViewModel.SortIndex, Mode=TwoWay}" />
                             </Grid>

@@ -31,6 +31,7 @@
                         MinWidth="340"
                         VerticalAlignment="Center"
                         IsEnabled="{x:Bind ViewModel.CanChangeDisk, Mode=OneWay}"
+                        AutomationProperties.Name="Disque à analyser"
                         ItemsSource="{x:Bind ViewModel.Disks}"
                         SelectedIndex="{x:Bind ViewModel.SelectedDiskIndex, Mode=TwoWay}">
                         <ComboBox.ItemTemplate>
@@ -110,6 +111,8 @@
                     <Border Padding="8" Style="{StaticResource CardStyle}">
                         <controls:PolarChart
                             Height="400"
+                            AutomationProperties.HelpText="La liste à côté du graphique donne les mêmes informations, avec le détail de chaque élément."
+                            AutomationProperties.Name="Répartition de l'espace du disque"
                             BucketSelected="OnChartBucketSelected"
                             Buckets="{x:Bind ViewModel.Buckets, Mode=OneWay}"
                             SelectedBucket="{x:Bind ViewModel.SelectedBucket, Mode=OneWay}" />
