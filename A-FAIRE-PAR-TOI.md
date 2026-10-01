@@ -32,6 +32,18 @@ Je coche et je complète cette liste au fur et à mesure. Date de dernière mise
 - [ ] Langues : tout est en français aujourd'hui.
 - [ ] Support client : adresse e-mail et délai de réponse annoncé dans les CGV.
 
+## Fonctions que je n'ai pas faites sans ton avis (face à CCleaner et consorts)
+
+Chacune touche à ton système ou demande une décision de produit. Dis-moi lesquelles tu veux, je les ferai une par une.
+
+- [ ] **Désinstalleur qui supprime les restes** : lance le désinstalleur de Windows puis propose les dossiers laissés derrière (jamais le registre par défaut).
+- [ ] **Maintenance automatique silencieuse** : demande une tâche planifiée Windows et une règle claire (seulement les éléments « sûrs », rapport à chaque passage). À décider : veux-tu que Clean tourne sans que tu l'ouvres ?
+- [ ] **Allègement de Windows 11** (applications préinstallées, télémétrie), réversible : risqué, à cadrer précisément.
+- [ ] **Test de compatibilité Windows 11** pour les PC sous Windows 10.
+- [ ] **Page Développeur** (dossiers `node_modules`, `bin/obj`) : reste une maquette.
+- [ ] **Démarrage : durée en secondes** : Windows ne la donne pas sans droits administrateur, donc la page n'en affiche aucune plutôt que d'en inventer.
+- [ ] **Point de restauration Windows** avant un gros nettoyage (demande des droits administrateur).
+
 ## Plus tard
 
 - [ ] Captures d'écran et vidéo de démonstration pour le site.

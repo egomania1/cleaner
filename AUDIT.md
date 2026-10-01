@@ -336,7 +336,7 @@ Tout ce qui pouvait être fait sans compte, argent ni identité est fait. Le res
 | W1 (site responsive) | **fait** : `website/site`, vérifié à 320/360/768/1280 px, 44 px au toucher, contrastes AA mesurés, mode sombre et clair |
 | W2, W3 (accessibilité de l'app) | partiel : noms et graphiques corrigés, vérifié à 960 px ; Narrateur, 125-200 % et contrastes de l'app **à tester par le propriétaire** |
 | C2, C4 (signature, installateur, mise à jour) | **non fait** : demande une identité éditeur ou un certificat. Marche à suivre dans `docs/MSIX.md` |
-| Section 8 (comparaison marché) | inchangée : démarrage, désinstalleur avec restes, allègement Windows 11, test de compatibilité Windows 11, maintenance automatique **non faits** |
+| Section 8 (comparaison marché) | **Démarrage : fait** (page 09 : liste, activer/désactiver de façon réversible comme le Gestionnaire des tâches, entrées orphelines signalées ; **pas de durée en secondes**, Windows ne la donne pas sans droits administrateur). **Non faits** : désinstalleur avec restes, allègement Windows 11, test de compatibilité Windows 11, maintenance automatique, page Développeur (maquette) : voir `A-FAIRE-PAR-TOI.md` |
 
 **Verdict mis à jour : Pas encore.** L'app et le code de vente sont prêts techniquement ; il reste les éléments
 d'identité et de paiement (statut, Stripe, domaine, textes légaux validés, signature) et des fonctions face au marché.

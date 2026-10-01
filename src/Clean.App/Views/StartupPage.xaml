@@ -1,0 +1,130 @@
+<Page
+    x:Class="Clean.App.Views.StartupPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Clean.App.Controls"
+    xmlns:viewmodels="using:Clean.App.ViewModels">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled">
+        <Grid Padding="32,8,32,32">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="100*" MaxWidth="1600" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="1" Spacing="16">
+                <StackPanel Spacing="4">
+                    <controls:PageTitle Index="09" Text="Démarrage" />
+                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Les programmes qui se lancent avec Windows. Désactiver un programme ne le désinstalle pas : tu peux le réactiver ici à tout moment." />
+                </StackPanel>
+
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="DÉMARRENT AVEC WINDOWS" />
+                            <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.EnabledText, Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="DÉSACTIVÉS" />
+                            <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.DisabledText, Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="PROGRAMME INTROUVABLE" />
+                            <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.MissingText, Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <TextBlock
+                    AutomationProperties.LiveSetting="Polite"
+                    Style="{StaticResource MutedTextStyle}"
+                    Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.HasStatusMessage, Mode=OneWay}" />
+
+                <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
+                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Aucun programme de démarrage trouvé." />
+                </Border>
+
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Rows}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Spacing="8" />
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodels:StartupRow">
+                            <Border Style="{StaticResource CardStyle}">
+                                <Grid ColumnSpacing="24">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Spacing="4">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <TextBlock
+                                                FontSize="15"
+                                                FontWeight="SemiBold"
+                                                Text="{x:Bind Name}" />
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                AutomationProperties.Name="{x:Bind StateLabel, Mode=OneWay}"
+                                                CharacterSpacing="60"
+                                                FontSize="11"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource SafeBrush}"
+                                                Text="{x:Bind StateText, Mode=OneWay}" />
+                                        </StackPanel>
+                                        <TextBlock
+                                            FontSize="13"
+                                            Foreground="{StaticResource MutedTextBrush}"
+                                            Text="{x:Bind PublisherText}" />
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="{StaticResource MutedTextBrush}"
+                                            Opacity="0.8"
+                                            Text="{x:Bind SourceText}" />
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="{StaticResource MutedTextBrush}"
+                                            Opacity="0.8"
+                                            Text="{x:Bind CommandText}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="{StaticResource CautionBrush}"
+                                            Text="{x:Bind MissingText}"
+                                            Visibility="{x:Bind IsMissing}" />
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="{StaticResource MutedTextBrush}"
+                                            Text="{x:Bind AdministratorText}"
+                                            Visibility="{x:Bind CannotChange}" />
+                                    </StackPanel>
+
+                                    <Button
+                                        Grid.Column="1"
+                                        Padding="18,8"
+                                        VerticalAlignment="Center"
+                                        AutomationProperties.Name="{x:Bind ActionText, Mode=OneWay}"
+                                        Command="{x:Bind ToggleCommand}"
+                                        Content="{x:Bind ActionText, Mode=OneWay}"
+                                        Style="{StaticResource LiquidButtonStyle}"
+                                        Visibility="{x:Bind CanChange}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

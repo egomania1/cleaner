@@ -98,6 +98,7 @@ public partial class App : Application
         services.AddSingleton<IEntryInspector, EntryInspector>();
         services.AddSingleton<IFolderSizer, FolderSizer>();
         services.AddSingleton<IProcessMonitor, ProcessMonitor>();
+        services.AddSingleton<IStartupCatalog>(provider => StartupCatalog.ForThisPc(provider.GetRequiredService<ILogger<StartupCatalog>>()));
         services.AddSingleton<NavigationService>();
         services.AddSingleton(TimeProvider.System);
 
@@ -165,6 +166,7 @@ public partial class App : Application
         services.AddSingleton<DuplicatesViewModel>();
         services.AddSingleton<LargeFilesViewModel>();
         services.AddSingleton<LicenseViewModel>();
+        services.AddSingleton<StartupViewModel>();
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<MainWindow>();
 

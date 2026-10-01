@@ -9,7 +9,7 @@ Everything stays on the PC: nothing is sent online.
 
 - Explains every item before it is cleaned, with a risk level (safe, caution, expert, blocked).
 - Moves cleaned files to a local archive instead of deleting them: restorable for 7 days from the History page.
-- Storage map of each disk, installed applications with live CPU and memory, duplicates, large files.
+- Storage map of each disk, installed applications with live CPU and memory, startup programs (reversible on or off), duplicates, large files.
 - Browser caches only (Chrome, Edge, Brave, Opera, Firefox): passwords, cookies, sessions and bookmarks are never listed.
 - Free analysis. A 5-day full trial, then moving or removing files needs a licence (one-time purchase, sold on a separate website).
   Restoring files is always free.
