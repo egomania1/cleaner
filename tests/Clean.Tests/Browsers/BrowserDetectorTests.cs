@@ -92,6 +92,20 @@ public sealed class BrowserDetectorTests : IDisposable
     }
 
     [Fact]
+    public void Detect_KnowsWhichProgramEachCacheBelongsTo()
+    {
+        _temp.CreateFile($@"{ChromeData}\Default\Cache\x", 1);
+        _temp.CreateFile(@"Local\Microsoft\Edge\User Data\Default\Cache\x", 1);
+        _temp.CreateFile(@"Local\Mozilla\Firefox\Profiles\ab.p\cache2\x", 1);
+
+        var processes = Detect().Select(location => location.ProcessName).Order().ToList();
+        var rules = BrowserRuleBuilder.Build(Detect(), Expand).Rules;
+
+        Assert.Equal(["chrome", "firefox", "msedge"], processes);
+        Assert.All(rules, rule => Assert.False(string.IsNullOrEmpty(rule.ProcessName)));
+    }
+
+    [Fact]
     public void Detect_FindsOperaCachesDirectlyUnderItsFolder()
     {
         _temp.CreateFile(@"Local\Opera Software\Opera Stable\Cache\Cache_Data\f", 10);

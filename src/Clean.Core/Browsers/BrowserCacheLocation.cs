@@ -7,4 +7,5 @@ public sealed record BrowserCacheLocation(
     string? ProfileName,
     string FolderName,
     BrowserCacheKind Kind,
-    string Path);
+    string Path,
+    string ProcessName);

@@ -53,7 +53,8 @@ public static partial class BrowserRuleBuilder
             Risk: RiskLevel.Safe,
             Paths: [location.Path],
             MinimumAgeDays: 0,
-            AutomaticCleaningAllowed: true);
+            AutomaticCleaningAllowed: true,
+            ProcessName: location.ProcessName);
     }
 
     private static string KindLabel(BrowserCacheKind kind) => kind switch

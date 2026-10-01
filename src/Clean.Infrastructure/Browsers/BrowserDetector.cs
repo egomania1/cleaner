@@ -31,18 +31,19 @@ public sealed partial class BrowserDetector(ILogger<BrowserDetector> logger, Fun
         ("startupCache", BrowserCacheKind.Code),
     ];
 
-    private static readonly (string Id, string Name, string UserData)[] ChromiumBrowsers =
+    // ProcessName is the executable name without ".exe": the cache is only cleaned cleanly once it is closed.
+    private static readonly (string Id, string Name, string UserData, string ProcessName)[] ChromiumBrowsers =
     [
-        ("CHROME", "Chrome", @"%LOCALAPPDATA%\Google\Chrome\User Data"),
-        ("EDGE", "Edge", @"%LOCALAPPDATA%\Microsoft\Edge\User Data"),
-        ("BRAVE", "Brave", @"%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data"),
+        ("CHROME", "Chrome", @"%LOCALAPPDATA%\Google\Chrome\User Data", "chrome"),
+        ("EDGE", "Edge", @"%LOCALAPPDATA%\Microsoft\Edge\User Data", "msedge"),
+        ("BRAVE", "Brave", @"%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data", "brave"),
     ];
 
     // Opera keeps its profile in one place and its caches in another; the cache side looks like a user data folder.
-    private static readonly (string Id, string Name, string Root)[] OperaBrowsers =
+    private static readonly (string Id, string Name, string Root, string ProcessName)[] OperaBrowsers =
     [
-        ("OPERA", "Opera", @"%LOCALAPPDATA%\Opera Software\Opera Stable"),
-        ("OPERA_GX", "Opera GX", @"%LOCALAPPDATA%\Opera Software\Opera GX Stable"),
+        ("OPERA", "Opera", @"%LOCALAPPDATA%\Opera Software\Opera Stable", "opera"),
+        ("OPERA_GX", "Opera GX", @"%LOCALAPPDATA%\Opera Software\Opera GX Stable", "opera"),
     ];
 
     private const string FirefoxProfiles = @"%LOCALAPPDATA%\Mozilla\Firefox\Profiles";
@@ -53,21 +54,21 @@ public sealed partial class BrowserDetector(ILogger<BrowserDetector> logger, Fun
     {
         var locations = new List<BrowserCacheLocation>();
 
-        foreach (var (id, name, userData) in ChromiumBrowsers)
+        foreach (var (id, name, userData, processName) in ChromiumBrowsers)
         {
-            DetectChromium(id, name, userData, includeRoot: false, locations);
+            DetectChromium(id, name, userData, processName, includeRoot: false, locations);
         }
 
-        foreach (var (id, name, root) in OperaBrowsers)
+        foreach (var (id, name, root, processName) in OperaBrowsers)
         {
-            DetectChromium(id, name, root, includeRoot: true, locations);
+            DetectChromium(id, name, root, processName, includeRoot: true, locations);
         }
 
         DetectFirefox(locations);
         return locations;
     }
 
-    private void DetectChromium(string id, string name, string userData, bool includeRoot, List<BrowserCacheLocation> locations)
+    private void DetectChromium(string id, string name, string userData, string processName, bool includeRoot, List<BrowserCacheLocation> locations)
     {
         if (!Directory.Exists(_expand(userData)))
         {
@@ -78,15 +79,15 @@ public sealed partial class BrowserDetector(ILogger<BrowserDetector> logger, Fun
         foreach (var folder in ChromiumProfileFolders(_expand(userData)))
         {
             profileNames.TryGetValue(folder, out var displayName);
-            AddCaches(locations, id, name, displayName ?? folder, $@"{userData}\{folder}", ProfileCaches);
+            AddCaches(locations, id, name, processName, displayName ?? folder, $@"{userData}\{folder}", ProfileCaches);
         }
 
         if (includeRoot)
         {
-            AddCaches(locations, id, name, null, userData, ProfileCaches);
+            AddCaches(locations, id, name, processName, null, userData, ProfileCaches);
         }
 
-        AddCaches(locations, id, name, null, userData, SharedCaches);
+        AddCaches(locations, id, name, processName, null, userData, SharedCaches);
     }
 
     private void DetectFirefox(List<BrowserCacheLocation> locations)
@@ -100,7 +101,7 @@ public sealed partial class BrowserDetector(ILogger<BrowserDetector> logger, Fun
         foreach (var directory in SafeDirectories(profiles))
         {
             var folder = Path.GetFileName(directory);
-            AddCaches(locations, "FIREFOX", "Firefox", FirefoxProfileName(folder), $@"{FirefoxProfiles}\{folder}", FirefoxCaches);
+            AddCaches(locations, "FIREFOX", "Firefox", "firefox", FirefoxProfileName(folder), $@"{FirefoxProfiles}\{folder}", FirefoxCaches);
         }
     }
 
@@ -108,6 +109,7 @@ public sealed partial class BrowserDetector(ILogger<BrowserDetector> logger, Fun
         List<BrowserCacheLocation> locations,
         string id,
         string name,
+        string processName,
         string? profileName,
         string parent,
         (string FolderName, BrowserCacheKind Kind)[] caches)
@@ -117,7 +119,7 @@ public sealed partial class BrowserDetector(ILogger<BrowserDetector> logger, Fun
             var path = $@"{parent}\{folderName}";
             if (Directory.Exists(_expand(path)))
             {
-                locations.Add(new BrowserCacheLocation(id, name, profileName, folderName, kind, path));
+                locations.Add(new BrowserCacheLocation(id, name, profileName, folderName, kind, path, processName));
             }
         }
     }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Clean.Core.Interfaces;
 using Clean.Core.Models;
 using Clean.Core.Scanning;
@@ -10,7 +11,8 @@ public sealed class KnownLocationScanner(
     IReadOnlyList<CleaningRule> rules,
     IReparsePointDetector reparsePointDetector,
     TimeProvider clock,
-    ILogger<KnownLocationScanner> logger) : IScanner
+    ILogger<KnownLocationScanner> logger,
+    Func<string, bool>? isProcessRunning = null) : IScanner
 {
     private static readonly EnumerationOptions RecursiveOptions = new()
     {
@@ -18,6 +20,8 @@ public sealed class KnownLocationScanner(
         RecurseSubdirectories = true,
         AttributesToSkip = FileAttributes.ReparsePoint,
     };
+
+    private readonly Func<string, bool> _isRunning = isProcessRunning ?? IsRunning;
 
     public string Id => "known-locations";
 
@@ -90,18 +94,38 @@ public sealed class KnownLocationScanner(
             logger.LogWarning(exception, "Could not fully measure {Folder}", folder.FullName);
         }
 
+        // A cache whose program is open is not a safe thing to clean: it is shown with a warning and not ticked by default.
+        var isOpen = rule.ProcessName is { } process && _isRunning(process);
+        var risk = isOpen && rule.Risk < RiskLevel.Caution ? RiskLevel.Caution : rule.Risk;
+
         return new ScanItem(
             Path: folder.FullName,
             Name: rule.Name,
             SizeBytes: eligibleBytes,
             Category: rule.Category,
-            Risk: rule.Risk,
-            Reason: rule.Description,
+            Risk: risk,
+            Reason: isOpen ? $"Ce programme est ouvert : ferme-le pour que le nettoyage soit complet et propre. {rule.Description}" : rule.Description,
             RuleId: rule.Id,
             LastModified: lastModified is null ? null : new DateTimeOffset(lastModified.Value, TimeSpan.Zero),
             CanClean: eligibleBytes > 0 && rule.Risk != RiskLevel.Blocked,
-            RequiresConfirmation: rule.Risk != RiskLevel.Safe,
+            RequiresConfirmation: risk != RiskLevel.Safe,
             FileCount: eligibleFiles,
             SkippedFileCount: skippedFiles);
+    }
+
+    private static bool IsRunning(string processName)
+    {
+        var processes = Process.GetProcessesByName(processName);
+        try
+        {
+            return processes.Length > 0;
+        }
+        finally
+        {
+            foreach (var process in processes)
+            {
+                process.Dispose();
+            }
+        }
     }
 }

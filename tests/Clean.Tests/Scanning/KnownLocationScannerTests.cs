@@ -106,8 +106,44 @@ public sealed class KnownLocationScannerTests : IDisposable
         Assert.Empty(await ScanAsync(Rule(), otherDrive));
     }
 
-    private Task<IReadOnlyList<ScanItem>> ScanAsync(CleaningRule rule, string? driveRoot = null) =>
-        new KnownLocationScanner([rule], new ReparsePointDetector(), TimeProvider.System, NullLogger<KnownLocationScanner>.Instance)
+    [Fact]
+    public async Task ScanAsync_WarnsWhenTheProgramOfTheRuleIsOpen()
+    {
+        File.SetLastWriteTimeUtc(_cache.CreateFile("a.tmp", 10), OldDate);
+        var rule = Rule() with { ProcessName = "somebrowser" };
+
+        var item = Assert.Single(await ScanAsync(rule, isProcessRunning: name => name == "somebrowser"));
+
+        Assert.Equal(RiskLevel.Caution, item.Risk);
+        Assert.True(item.RequiresConfirmation);
+        Assert.True(item.CanClean);
+        Assert.StartsWith("Ce programme est ouvert", item.Reason);
+    }
+
+    [Fact]
+    public async Task ScanAsync_KeepsTheRuleRiskWhenTheProgramIsClosedOrUnknown()
+    {
+        File.SetLastWriteTimeUtc(_cache.CreateFile("a.tmp", 10), OldDate);
+
+        var closed = Assert.Single(await ScanAsync(Rule() with { ProcessName = "somebrowser" }, isProcessRunning: _ => false));
+        var unnamed = Assert.Single(await ScanAsync(Rule(), isProcessRunning: _ => true));
+
+        Assert.Equal(RiskLevel.Safe, closed.Risk);
+        Assert.Equal(RiskLevel.Safe, unnamed.Risk);
+    }
+
+    [Fact]
+    public async Task ScanAsync_NeverLowersAHigherRisk()
+    {
+        File.SetLastWriteTimeUtc(_cache.CreateFile("a.tmp", 10), OldDate);
+
+        var item = Assert.Single(await ScanAsync(Rule(risk: RiskLevel.Expert) with { ProcessName = "x" }, isProcessRunning: _ => true));
+
+        Assert.Equal(RiskLevel.Expert, item.Risk);
+    }
+
+    private Task<IReadOnlyList<ScanItem>> ScanAsync(CleaningRule rule, string? driveRoot = null, Func<string, bool>? isProcessRunning = null) =>
+        new KnownLocationScanner([rule], new ReparsePointDetector(), TimeProvider.System, NullLogger<KnownLocationScanner>.Instance, isProcessRunning)
             .ScanAsync(driveRoot ?? Path.GetPathRoot(_cache.RootPath)!, null, CancellationToken.None);
 
     private CleaningRule Rule(int minimumAgeDays = 0, RiskLevel risk = RiskLevel.Safe) =>

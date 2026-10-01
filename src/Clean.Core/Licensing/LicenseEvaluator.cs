@@ -13,8 +13,13 @@ public static class LicenseEvaluator
     {
         if (license is { AllowsPaidFeatures: true })
         {
-            return license.State == LicenseState.Grace
-                ? new AppAccess(AccessMode.Licensed, 0, "Licence expirée", license.Reason)
+            if (license.State == LicenseState.Grace)
+            {
+                return new AppAccess(AccessMode.Licensed, 0, "Licence expirée", license.Reason);
+            }
+
+            return license.Token?.Plan == LicensePlans.Owner
+                ? new AppAccess(AccessMode.Licensed, 0, "Compte propriétaire", "Accès complet, sans limite de durée.")
                 : new AppAccess(AccessMode.Licensed, 0, "Licence active", "Merci ! Toutes les fonctions sont disponibles.");
         }
 

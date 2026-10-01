@@ -33,6 +33,7 @@ public sealed class CleaningArchive(
         AttributesToSkip = FileAttributes.ReparsePoint,
     };
 
+    private readonly HashSet<string> _protectedVolumes = new(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim _lock = new(1, 1);
     private readonly IReparsePointDetector _links = reparsePointDetector ?? new ReparsePointDetector();
 
@@ -256,6 +257,18 @@ public sealed class CleaningArchive(
         if (!Directory.Exists(volumeArchive))
         {
             Directory.CreateDirectory(volumeArchive).Attributes |= FileAttributes.Hidden;
+        }
+
+        // Once per run and per drive, which also covers archives created before the rights were restricted.
+        bool firstTime;
+        lock (_protectedVolumes)
+        {
+            firstTime = _protectedVolumes.Add(volumeArchive);
+        }
+
+        if (firstTime && !ArchiveFolderSecurity.Protect(new DirectoryInfo(volumeArchive)))
+        {
+            logger.LogWarning("Could not restrict the rights of {Folder}", volumeArchive);
         }
 
         return Path.Combine(volumeArchive, "sessions", sessionId);

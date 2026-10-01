@@ -53,6 +53,30 @@ public sealed class TrialAndAccessTests : IDisposable
     }
 
     [Fact]
+    public void Evaluate_TheOwnerPlanIsFullAccessWithItsOwnTitle()
+    {
+        var token = new LicenseToken(1, "OWNER", LicensePlans.Owner, Start, Start.AddYears(70), null);
+
+        var access = LicenseEvaluator.Evaluate(new LicenseCheck(LicenseState.Valid, token, "ok"), new TrialRecord(Start, Start), Start.AddDays(900));
+
+        Assert.True(access.IsLicensed);
+        Assert.True(access.CanClean);
+        Assert.Equal("Compte propriétaire", access.Title);
+    }
+
+    [Fact]
+    public void Service_AnOwnerTokenWithoutADeviceWorksOnAnyPc()
+    {
+        var service = Service();
+        _clock.Now = Start.AddDays(10);
+
+        var check = service.Activate(Sign(new LicenseToken(1, "OWNER", LicensePlans.Owner, Start.AddDays(-1), Start.AddYears(70), null)));
+
+        Assert.True(check.AllowsPaidFeatures);
+        Assert.Equal("Compte propriétaire", service.Access.Title);
+    }
+
+    [Fact]
     public void Evaluate_AnInvalidOrExpiredLicenceFallsBackToTheTrial()
     {
         var expired = new LicenseCheck(LicenseState.Expired, null, "expired");

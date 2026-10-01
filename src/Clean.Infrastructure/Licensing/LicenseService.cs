@@ -39,7 +39,15 @@ public sealed class LicenseService : ILicenseService
 
     public bool CanVerifyLicenses => _verifier is not null;
 
+#if DEBUG
+    // Development builds only: not compiled into the version that is sold. The owner of a sold copy uses a
+    // normal signed licence with the "owner" plan, issued by the website.
+    public AppAccess Access => Environment.GetEnvironmentVariable("CLEAN_OWNER_ACCESS") == "1"
+        ? new AppAccess(AccessMode.Licensed, 0, "Compte propriétaire (développement)", "Accès complet : version de développement.")
+        : LicenseEvaluator.Evaluate(_license, _trial, _clock.GetUtcNow());
+#else
     public AppAccess Access => LicenseEvaluator.Evaluate(_license, _trial, _clock.GetUtcNow());
+#endif
 
     public void Refresh()
     {

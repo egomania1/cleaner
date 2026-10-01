@@ -8,4 +8,5 @@ public sealed record CleaningRule(
     RiskLevel Risk,
     IReadOnlyList<string> Paths,
     int MinimumAgeDays,
-    bool AutomaticCleaningAllowed);
+    bool AutomaticCleaningAllowed,
+    string? ProcessName = null);

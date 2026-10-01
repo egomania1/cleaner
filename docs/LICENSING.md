@@ -52,3 +52,7 @@ base64url(payload) + "." + base64url(signature)
 - Trial: 5 full days from the first launch (`trial.json`), then analysis, history and restoring stay free; moving or removing files needs a licence (`LicenseEvaluator`, `LicensedCleaner`, `LicensedFileRemover`).
 - Settings page: licence card, key field, PC id, log folder.
 - Still missing: the real public key (`LicenseKeys.PublicKey`, null for now, so activation is refused), the shop URL (`LicenseViewModel.PurchaseUrl`, empty, so the buy button is hidden).
+
+## Owner account
+
+The owner of the product gets a normal signed token with `plan: "owner"`, no `deviceId` and a far `expiresAt`: the app shows "Compte propriétaire" and unlocks everything on any PC. There is no hidden switch in the sold version. Debug builds only (not compiled into Release) also unlock everything when the environment variable `CLEAN_OWNER_ACCESS=1` is set.
