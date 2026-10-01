@@ -267,7 +267,7 @@ public sealed class AppsViewModel : ObservableObject
             // Measuring every folder can take a minute: the page is usable meanwhile and fills in as sizes arrive.
             _ = MeasureAsync(inventory);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             _logger.LogError(exception, "Could not load the installed applications");
             IsLoaded = true;
@@ -293,7 +293,7 @@ public sealed class AppsViewModel : ObservableObject
                 var size = await _folderSizer.MeasureAsync(entry.MeasureFolder!, entry.ExcludedFolders, CancellationToken.None);
                 _items[entry.Key].SetMeasuredSize(size);
             }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            catch (Exception exception) when (exception is not OperationCanceledException)
             {
                 _logger.LogDebug(exception, "Could not measure {Folder}", entry.MeasureFolder);
             }

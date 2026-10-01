@@ -161,9 +161,9 @@ public sealed class StorageDetailViewModel : ObservableObject
         catch (OperationCanceledException)
         {
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            LoadingMessage = "Clean n'a pas l'autorisation de lire cet emplacement.";
+            LoadingMessage = "Clean n'a pas pu lire cet emplacement.";
         }
         finally
         {

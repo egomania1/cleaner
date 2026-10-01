@@ -218,7 +218,7 @@ public abstract class FileToolViewModel : ObservableObject
             var previous = SelectedDisk?.Disk.RootPath;
             var disks = await _diskService.GetDisksAsync(CancellationToken.None);
             Disks.Clear();
-            foreach (var disk in disks)
+            foreach (var disk in disks.Where(disk => disk.CanRemoveFiles))
             {
                 Disks.Add(new DiskItemViewModel(disk));
             }
@@ -226,7 +226,7 @@ public abstract class FileToolViewModel : ObservableObject
             var selected = Disks.FirstOrDefault(disk => disk.Disk.RootPath == previous) ?? Disks.FirstOrDefault(disk => disk.IsSystemDrive);
             SelectedDiskIndex = selected is not null ? Disks.IndexOf(selected) : Disks.Count > 0 ? 0 : -1;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             Logger.LogError(exception, "Could not list the disks");
             StatusMessage = "Impossible de lister les disques.";
@@ -259,11 +259,11 @@ public abstract class FileToolViewModel : ObservableObject
             SetState(CleanerState.Idle);
             StatusMessage = "Analyse annulée.";
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             Logger.LogError(exception, "Analysis failed");
             SetState(CleanerState.Idle);
-            StatusMessage = "L'analyse a échoué : un dossier n'était pas accessible.";
+            StatusMessage = "L'analyse a échoué. Rien n'a été retiré.";
         }
     }
 
@@ -308,11 +308,11 @@ public abstract class FileToolViewModel : ObservableObject
             _disksLoading = LoadDisksAsync();
             await _disksLoading;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             Logger.LogError(exception, "Removal failed");
             SetState(CleanerState.Ready);
-            StatusMessage = "Le retrait a échoué. Relance l'analyse pour voir ce qui reste.";
+            StatusMessage = "Le retrait s'est arrêté sur une erreur. Ce qui a déjà été retiré est dans l'Historique : relance l'analyse pour voir ce qui reste.";
         }
     }
 

@@ -257,7 +257,7 @@ public sealed class StorageViewModel : ObservableObject
 
             SelectedDiskIndex = Disks.Count > 0 ? 0 : -1;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             _logger.LogError(exception, "Could not list the disks");
             StatusMessage = "Impossible de lire les disques de ce PC.";
@@ -302,11 +302,11 @@ public sealed class StorageViewModel : ObservableObject
             SetState(StorageViewState.Idle);
             StatusMessage = "Analyse annulée.";
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             _logger.LogError(exception, "Storage analysis of {Disk} failed", disk.RootPath);
             SetState(StorageViewState.Idle);
-            StatusMessage = $"L'analyse de {selected.Name} a échoué : le disque n'est pas accessible.";
+            StatusMessage = $"L'analyse de {selected.Name} a échoué : une erreur est survenue.";
         }
     }
 

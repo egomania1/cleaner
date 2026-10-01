@@ -101,10 +101,23 @@ public sealed class FileRemoverTests : IDisposable
         Assert.True(File.Exists(file));
     }
 
+    [Fact]
+    public async Task RemoveAsync_RefusesAFileReachedThroughAFolderThatBecameAJunction()
+    {
+        using var elsewhere = new TestDirectory();
+        var target = elsewhere.CreateFile("photo.raw", 1_000);
+        _files.CreateJunction("Downloads", elsewhere.RootPath);
+
+        var result = await RemoveAsync(Request(Path.Combine(_files.RootPath, "Downloads", "photo.raw")));
+
+        Assert.True(File.Exists(target));
+        Assert.Equal(0, result.RemovedFileCount);
+    }
+
     private Task<CleaningResult> RemoveAsync(params RemovalRequest[] requests)
     {
         var scope = new UserFileScope([Path.Combine(_files.RootPath, "Protected"), _archiveRoot.RootPath]);
-        var remover = new FileRemover(scope, _catalog, _archive, TimeProvider.System, NullLogger<FileRemover>.Instance);
+        var remover = new FileRemover(scope, _catalog, new ReparsePointDetector(), _archive, TimeProvider.System, NullLogger<FileRemover>.Instance);
         return remover.RemoveAsync(requests, "LARGE_FILES", "Gros fichiers", null, CancellationToken.None);
     }
 

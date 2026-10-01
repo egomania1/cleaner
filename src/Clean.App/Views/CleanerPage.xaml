@@ -57,7 +57,7 @@
                     Visibility="{x:Bind ViewModel.HasStatusMessage, Mode=OneWay}" />
 
                 <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.IsIdle, Mode=OneWay}">
-                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Choisis un disque puis lance l'analyse. Clean te montre les fichiers temporaires, caches et rapports de plantage qu'il sait reconnaître, puis tu choisis ce qui est supprimé." TextWrapping="Wrap" />
+                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Choisis un disque puis lance l'analyse. Clean te montre les fichiers temporaires, caches et rapports de plantage qu'il sait reconnaître, puis tu choisis ce qui est retiré : tout reste restaurable pendant 7 jours." TextWrapping="Wrap" />
                 </Border>
 
                 <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.IsScanning, Mode=OneWay}">

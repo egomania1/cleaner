@@ -13,6 +13,21 @@ public class DiskInfoTests
         Assert.Equal(0.75, disk.UsedRatio);
     }
 
+    [Theory]
+    [InlineData(DriveType.Fixed, true)]
+    [InlineData(DriveType.Removable, true)]
+    [InlineData(DriveType.Network, false)]
+    [InlineData(DriveType.CDRom, false)]
+    [InlineData(DriveType.Ram, false)]
+    [InlineData(DriveType.NoRootDirectory, false)]
+    [InlineData(DriveType.Unknown, false)]
+    public void CanRemoveFiles_OnlyOnLocalDisks(DriveType type, bool expected)
+    {
+        var disk = new DiskInfo(@"E:\", "Disk", type, TotalBytes: 100, FreeBytes: 50, IsSystemDrive: false);
+
+        Assert.Equal(expected, disk.CanRemoveFiles);
+    }
+
     [Fact]
     public void UsedRatio_IsZero_WhenDiskHasNoCapacity()
     {

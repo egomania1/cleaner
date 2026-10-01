@@ -3,13 +3,18 @@ using System.Text.Json.Serialization;
 using Clean.Core.Files;
 using Clean.Core.Interfaces;
 using Clean.Core.Models;
+using Clean.Infrastructure.FileSystem;
 using Microsoft.Extensions.Logging;
 
 namespace Clean.Infrastructure.Cleaning;
 
 // Layout: <root>\history.json lists the sessions, <root>\sessions\<id>\<location index>\ holds the files
 // with their paths relative to the cleaned folder, which is all a restore needs.
-public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogger<CleaningArchive> logger) : ICleaningArchive
+public sealed class CleaningArchive(
+    string rootFolder,
+    TimeProvider clock,
+    ILogger<CleaningArchive> logger,
+    IReparsePointDetector? reparsePointDetector = null) : ICleaningArchive
 {
     public static readonly string DefaultFolder = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Clean", "Archive");
@@ -29,6 +34,7 @@ public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogg
     };
 
     private readonly SemaphoreSlim _lock = new(1, 1);
+    private readonly IReparsePointDetector _links = reparsePointDetector ?? new ReparsePointDetector();
 
     public event Action? Changed;
 
@@ -136,7 +142,18 @@ public sealed class CleaningArchive(string rootFolder, TimeProvider clock, ILogg
             }
 
             var target = Path.TrimEndingDirectorySeparator(Path.GetFullPath(location.Path));
-            foreach (var file in new DirectoryInfo(source).EnumerateFiles("*", RecursiveOptions).ToList())
+            var files = new DirectoryInfo(source).EnumerateFiles("*", RecursiveOptions).ToList();
+
+            // The folder may have become a link since the cleaning: the files would land somewhere else.
+            // They stay in the archive, so the session can still be restored once the link is gone.
+            if (_links.FindLinkOnPath(target) is { } link)
+            {
+                logger.LogWarning("Not restoring into {Folder}: {Link} is a link to another location", target, link);
+                failed += files.Count;
+                continue;
+            }
+
+            foreach (var file in files)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {

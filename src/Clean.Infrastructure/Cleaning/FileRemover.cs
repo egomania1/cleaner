@@ -12,6 +12,7 @@ namespace Clean.Infrastructure.Cleaning;
 public sealed class FileRemover(
     UserFileScope scope,
     IInstalledProgramCatalog programs,
+    IReparsePointDetector reparsePointDetector,
     ICleaningArchive archive,
     TimeProvider clock,
     ILogger<FileRemover> logger) : IFileRemover
@@ -152,6 +153,17 @@ public sealed class FileRemover(
             return "a link or a system file";
         }
 
+        // A folder turned into a junction since the scan would make the move land somewhere else.
+        if (reparsePointDetector.FindLinkOnPath(file.FullName) is not null)
+        {
+            return "a link on the way to the file";
+        }
+
+        if (!IsOnDriveWhereFilesCanBeRemoved(file.FullName))
+        {
+            return "not on a local drive";
+        }
+
         if (ProgramMatcher.ProgramsAt(programs.All, file.FullName).Count > 0)
         {
             return "part of an installed application";
@@ -173,6 +185,24 @@ public sealed class FileRemover(
         }
 
         return null;
+    }
+
+    private static bool IsOnDriveWhereFilesCanBeRemoved(string path)
+    {
+        var root = Path.GetPathRoot(path);
+        if (string.IsNullOrEmpty(root) || root.StartsWith(@"\\", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        try
+        {
+            return DiskInfo.CanRemoveFilesOn(new DriveInfo(root).DriveType);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
     }
 
     private sealed class Outcome

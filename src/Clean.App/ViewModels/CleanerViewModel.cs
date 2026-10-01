@@ -242,7 +242,7 @@ public sealed class CleanerViewModel : ObservableObject
             var disks = await _diskService.GetDisksAsync(CancellationToken.None);
 
             Disks.Clear();
-            foreach (var disk in disks)
+            foreach (var disk in disks.Where(disk => disk.CanRemoveFiles))
             {
                 Disks.Add(new DiskItemViewModel(disk));
             }
@@ -250,7 +250,7 @@ public sealed class CleanerViewModel : ObservableObject
             var selected = Disks.FirstOrDefault(disk => disk.Disk.RootPath == previous) ?? Disks.FirstOrDefault(disk => disk.IsSystemDrive);
             SelectedDiskIndex = selected is not null ? Disks.IndexOf(selected) : Disks.Count > 0 ? 0 : -1;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             _logger.LogError(exception, "Could not list the disks");
             StatusMessage = "Impossible de lister les disques.";
@@ -294,11 +294,11 @@ public sealed class CleanerViewModel : ObservableObject
             SetState(CleanerState.Idle);
             StatusMessage = "Analyse annulée.";
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             _logger.LogError(exception, "Cleanup analysis failed");
             SetState(CleanerState.Idle);
-            StatusMessage = "L'analyse a échoué : un emplacement n'était pas accessible.";
+            StatusMessage = "L'analyse a échoué. Rien n'a été retiré.";
         }
     }
 
@@ -310,7 +310,7 @@ public sealed class CleanerViewModel : ObservableObject
 
         if (allowed.Count == 0)
         {
-            StatusMessage = $"Rien n'a été supprimé : {DescribeRefused(refused)}";
+            StatusMessage = $"Rien n'a été retiré : {DescribeRefused(refused)}";
             return;
         }
 
@@ -340,11 +340,11 @@ public sealed class CleanerViewModel : ObservableObject
             _disksLoading = LoadDisksAsync();
             await _disksLoading;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             _logger.LogError(exception, "Cleaning failed");
             SetState(CleanerState.Ready);
-            StatusMessage = "Le nettoyage a échoué. Relance l'analyse pour voir ce qui reste.";
+            StatusMessage = "Le nettoyage s'est arrêté sur une erreur. Ce qui a déjà été retiré est dans l'Historique : relance l'analyse pour voir ce qui reste.";
         }
     }
 
@@ -373,7 +373,7 @@ public sealed class CleanerViewModel : ObservableObject
             "Nettoyer maintenant ?",
             message,
             warnings.Count > 0 ? string.Join(Environment.NewLine + Environment.NewLine, warnings) : null,
-            $"Supprimer {ByteSize.Format(bytes)}");
+            $"Mettre de côté {ByteSize.Format(bytes)}");
     }
 
     private static string DescribeRefused(IEnumerable<CleaningDecision> refused) =>

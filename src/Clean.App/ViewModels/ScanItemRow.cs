@@ -56,8 +56,8 @@ public sealed class ScanItemRow : ObservableObject
     public string SizeText => ByteSize.Format(Item.SizeBytes);
 
     public string ActionText => Item.CanClean
-        ? $"Supprimera {ByteSize.Format(Item.SizeBytes)} ({Item.FileCount.ToString("N0", French)} fichiers)"
-        : "Rien à supprimer pour l'instant";
+        ? $"Retirera {ByteSize.Format(Item.SizeBytes)} ({Item.FileCount.ToString("N0", French)} fichiers), restaurable {CleaningSession.RetentionPeriod.Days} jours"
+        : "Rien à retirer pour l'instant";
 
     public string RuleText => $"Règle {Item.RuleId}";
 

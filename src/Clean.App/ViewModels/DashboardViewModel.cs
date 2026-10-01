@@ -54,7 +54,7 @@ public sealed class DashboardViewModel(
 
             ErrorMessage = null;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             logger.LogError(exception, "Could not list the disks");
             ErrorMessage = "Impossible de lire les disques de ce PC.";

@@ -117,6 +117,26 @@ public sealed class CleaningArchiveTests : IDisposable
     }
 
     [Fact]
+    public async Task RestoreAsync_NeverRestoresThroughALinkAndKeepsTheSessionRestorable()
+    {
+        using var elsewhere = new TestDirectory();
+        Old(_cache.CreateFile("settings.cache", 10));
+        var session = await CleanAsync();
+        _cache.CreateJunction("Link", elsewhere.RootPath);
+        var path = Path.Combine(_archiveRoot.RootPath, "history.json");
+        var history = JsonNode.Parse(File.ReadAllText(path))!.AsArray();
+        history[0]!["locations"]![0]!["path"] = Path.Combine(_cache.RootPath, "Link");
+        File.WriteAllText(path, history.ToJsonString());
+
+        var result = await _archive.RestoreAsync(session.Id, CancellationToken.None);
+
+        Assert.Equal(0, result.RestoredFileCount);
+        Assert.Equal(1, result.FailedFileCount);
+        Assert.Empty(Directory.GetFiles(elsewhere.RootPath));
+        Assert.Equal(CleaningSessionStatus.Restorable, (await SingleSessionAsync()).Status);
+    }
+
+    [Fact]
     public async Task History_UnreadableFileIsKeptAside()
     {
         Directory.CreateDirectory(_archiveRoot.RootPath);

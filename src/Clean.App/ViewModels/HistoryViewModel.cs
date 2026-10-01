@@ -102,7 +102,7 @@ public sealed class HistoryViewModel : ObservableObject
                 .Select(session => new CleaningSessionRow(session, now, RestoreAsync, FreeAsync))
                 .ToList();
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             _logger.LogError(exception, "Could not read the cleaning history");
             StatusMessage = "Impossible de lire l'historique des nettoyages.";
@@ -161,10 +161,10 @@ public sealed class HistoryViewModel : ObservableObject
         {
             await action();
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             _logger.LogError(exception, "History action failed");
-            StatusMessage = "L'opération a échoué : un fichier ou un dossier n'était pas accessible.";
+            StatusMessage = "L'opération a échoué. Regarde l'historique pour voir ce qui a été fait.";
         }
         finally
         {
