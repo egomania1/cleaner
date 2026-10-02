@@ -522,10 +522,20 @@
                                                 Style="{StaticResource LiquidButtonStyle}" />
                                             <Button
                                                 Padding="18,8"
+                                                Command="{x:Bind ViewModel.UninstallCommand}"
+                                                Content="Désinstaller et nettoyer les restes"
+                                                Style="{StaticResource LiquidButtonStyle}" />
+                                            <Button
+                                                Padding="18,8"
                                                 Command="{x:Bind ViewModel.OpenAppsSettingsCommand}"
                                                 Content="Désinstaller dans Windows"
                                                 Style="{StaticResource LiquidButtonStyle}" />
                                         </StackPanel>
+                                        <TextBlock
+                                            AutomationProperties.LiveSetting="Polite"
+                                            Style="{StaticResource MutedTextStyle}"
+                                            Text="{x:Bind ViewModel.Uninstall.StatusMessage, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.Uninstall.HasStatusMessage, Mode=OneWay}" />
                                     </StackPanel>
                                 </StackPanel>
                             </Border>

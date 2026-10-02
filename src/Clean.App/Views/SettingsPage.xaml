@@ -88,6 +88,37 @@
 
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel Spacing="10">
+                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="MAINTENANCE AUTOMATIQUE" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.MaintenanceText}" />
+                        <ToggleSwitch
+                            AutomationProperties.Name="Maintenance automatique hebdomadaire"
+                            IsOn="{x:Bind ViewModel.AutoMaintenance, Mode=OneWay}"
+                            OffContent="Désactivée"
+                            OnContent="Activée"
+                            Toggled="OnMaintenanceToggled" />
+                        <TextBlock
+                            AutomationProperties.LiveSetting="Polite"
+                            Style="{StaticResource MutedTextStyle}"
+                            Text="{x:Bind ViewModel.MaintenanceMessage, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.HasMaintenanceMessage, Mode=OneWay}" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.LastReportText, Mode=OneWay}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="10">
+                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="POINT DE RESTAURATION WINDOWS" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.RestorePointText}" />
+                        <ToggleSwitch
+                            AutomationProperties.Name="Créer un point de restauration Windows avant un nettoyage"
+                            IsOn="{x:Bind ViewModel.RestorePointBeforeCleaning, Mode=TwoWay}"
+                            OffContent="Désactivé"
+                            OnContent="Activé" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel Spacing="10">
                         <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="JOURNAL ET CONFIDENTIALITÉ" />
                         <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.LogsText}" />
                         <Button

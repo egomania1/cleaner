@@ -46,6 +46,9 @@ public sealed partial class TreemapChart : UserControl
         };
 
         Content = _canvas;
+        IsTabStop = true;
+        UseSystemFocusVisuals = true;
+        KeyDown += OnKeyDown;
         SizeChanged += (_, _) => Redraw();
     }
 
@@ -142,8 +145,38 @@ public sealed partial class TreemapChart : UserControl
         element.PointerEntered += (_, _) => SetHovered(tile.Key);
         element.PointerExited += (_, _) => SetHovered(null);
         element.PointerMoved += (_, e) => MoveTooltip(tile, e.GetCurrentPoint(_canvas).Position);
-        element.Tapped += (_, _) => TileSelected?.Invoke(this, tile.Key);
+        element.Tapped += (_, _) =>
+        {
+            Focus(FocusState.Pointer);
+            TileSelected?.Invoke(this, tile.Key);
+        };
         return element;
+    }
+
+    // Arrow keys walk through the tiles in their list order (largest first), Home and End jump to the ends:
+    // the same choice a mouse click makes, so the detail panel follows.
+    private void OnKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        if (_elements.Count == 0)
+        {
+            return;
+        }
+
+        var current = _elements.FindIndex(entry => entry.Tile.Key == SelectedKey);
+        int? target = e.Key switch
+        {
+            Windows.System.VirtualKey.Right or Windows.System.VirtualKey.Down => current < 0 ? 0 : Math.Min(current + 1, _elements.Count - 1),
+            Windows.System.VirtualKey.Left or Windows.System.VirtualKey.Up => current < 0 ? 0 : Math.Max(current - 1, 0),
+            Windows.System.VirtualKey.Home => 0,
+            Windows.System.VirtualKey.End => _elements.Count - 1,
+            _ => null,
+        };
+
+        if (target is { } index)
+        {
+            e.Handled = true;
+            TileSelected?.Invoke(this, _elements[index].Tile.Key);
+        }
     }
 
     private void MoveTooltip(TreemapTile tile, Windows.Foundation.Point position)

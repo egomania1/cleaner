@@ -131,5 +131,9 @@ public sealed class FileRemoverTests : IDisposable
         public IReadOnlyList<ProgramInfo> All => Programs;
 
         public IReadOnlyList<ProgramInfo> ProgramsAt(string path) => [];
+
+        public void Reload()
+        {
+        }
     }
 }

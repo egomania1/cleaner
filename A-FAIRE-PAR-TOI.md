@@ -36,13 +36,13 @@ Je coche et je complète cette liste au fur et à mesure. Date de dernière mise
 
 Chacune touche à ton système ou demande une décision de produit. Dis-moi lesquelles tu veux, je les ferai une par une.
 
-- [ ] **Désinstalleur qui supprime les restes** : lance le désinstalleur de Windows puis propose les dossiers laissés derrière (jamais le registre par défaut).
-- [ ] **Maintenance automatique silencieuse** : demande une tâche planifiée Windows et une règle claire (seulement les éléments « sûrs », rapport à chaque passage). À décider : veux-tu que Clean tourne sans que tu l'ouvres ?
+- [x] **Désinstalleur qui supprime les restes** : fait (page Applications). À essayer par toi sur une petite application dont tu ne te sers plus.
+- [x] **Maintenance automatique silencieuse** : faite, désactivée par défaut (Paramètres, interrupteur). À tester par toi : l'activer, puis lancer la tâche « Clean - Maintenance » depuis le Planificateur de tâches Windows et lire le rapport dans Paramètres.
 - [ ] **Allègement de Windows 11** (applications préinstallées, télémétrie), réversible : risqué, à cadrer précisément.
 - [ ] **Test de compatibilité Windows 11** pour les PC sous Windows 10.
-- [ ] **Page Développeur** (dossiers `node_modules`, `bin/obj`) : reste une maquette.
+- [x] **Page Développeur** (dossiers `node_modules`, `bin/obj`…) : faite. Essaie-la sur tes disques de projets (H:, E:).
 - [ ] **Démarrage : durée en secondes** : Windows ne la donne pas sans droits administrateur, donc la page n'en affiche aucune plutôt que d'en inventer.
-- [ ] **Point de restauration Windows** avant un gros nettoyage (demande des droits administrateur).
+- [x] **Point de restauration Windows** avant un nettoyage : fait, désactivé par défaut (Paramètres). À tester par toi : il demande l'autorisation administrateur de Windows.
 
 ## Plus tard
 

@@ -20,6 +20,8 @@ public sealed class CleanerViewModel : ObservableObject
     private readonly ISafetyEngine _safetyEngine;
     private readonly ICleaner _cleaner;
     private readonly ILicenseService _license;
+    private readonly ISettingsStore _settings;
+    private readonly IRestorePointService _restorePoints;
     private readonly ILogger<CleanerViewModel> _logger;
 
     private Task? _disksLoading;
@@ -43,6 +45,8 @@ public sealed class CleanerViewModel : ObservableObject
         ISafetyEngine safetyEngine,
         ICleaner cleaner,
         ILicenseService license,
+        ISettingsStore settings,
+        IRestorePointService restorePoints,
         NavigationService navigation,
         ILogger<CleanerViewModel> logger)
     {
@@ -51,6 +55,8 @@ public sealed class CleanerViewModel : ObservableObject
         _safetyEngine = safetyEngine;
         _cleaner = cleaner;
         _license = license;
+        _settings = settings;
+        _restorePoints = restorePoints;
         _logger = logger;
         AnalyzeCommand = new AsyncRelayCommand(AnalyzeAsync, () => SelectedDisk is not null && !IsCleaning);
         CancelCommand = AnalyzeCommand.CreateCancelCommand();
@@ -328,7 +334,8 @@ public sealed class CleanerViewModel : ObservableObject
             return;
         }
 
-        StatusMessage = null;
+        var restorePointNote = await CreateRestorePointIfAskedAsync(cancellationToken);
+        StatusMessage = restorePointNote;
         CleaningFilesText = "0";
         CleaningFreedText = ByteSize.Format(0);
         CurrentPath = string.Empty;
@@ -355,6 +362,22 @@ public sealed class CleanerViewModel : ObservableObject
             SetState(CleanerState.Ready);
             StatusMessage = "Le nettoyage s'est arrêté sur une erreur. Ce qui a déjà été retiré est dans l'Historique : relance l'analyse pour voir ce qui reste.";
         }
+    }
+
+    private async Task<string?> CreateRestorePointIfAskedAsync(CancellationToken cancellationToken)
+    {
+        if (!_settings.Current.RestorePointBeforeCleaning)
+        {
+            return null;
+        }
+
+        StatusMessage = "Création du point de restauration Windows…";
+        return await _restorePoints.CreateAsync("Clean - avant nettoyage", cancellationToken) switch
+        {
+            RestorePointOutcome.Created => null,
+            RestorePointOutcome.Declined => "Point de restauration refusé : le nettoyage a continué. Tout reste restaurable depuis l'Historique.",
+            _ => "Windows n'a pas créé de point de restauration (protection du système désactivée ?). Le nettoyage a continué : tout reste restaurable depuis l'Historique.",
+        };
     }
 
     private static CleaningConfirmation BuildConfirmation(IReadOnlyList<CleaningDecision> allowed, IReadOnlyList<CleaningDecision> refused)

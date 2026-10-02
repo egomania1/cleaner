@@ -1,0 +1,277 @@
+<Page
+    x:Class="Clean.App.Views.DeveloperPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Clean.App.Controls"
+    xmlns:viewmodels="using:Clean.App.ViewModels">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled">
+        <Grid Padding="32,8,32,32">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="100*" MaxWidth="1600" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="1" Spacing="16">
+                <StackPanel Spacing="4">
+                    <controls:PageTitle Index="07" Text="Développeur" />
+                    <TextBlock Style="{StaticResource MutedTextStyle}" Text="Les dossiers que tes outils recréent tout seuls : node_modules, bin et obj, target… Rien de ce que tu as écrit n'est dedans." />
+                </StackPanel>
+
+                <controls:LicenseBanner />
+
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ComboBox
+                        MinWidth="340"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="Disque à analyser"
+                        IsEnabled="{x:Bind ViewModel.CanChangeSettings, Mode=OneWay}"
+                        ItemsSource="{x:Bind ViewModel.Disks}"
+                        SelectedIndex="{x:Bind ViewModel.SelectedDiskIndex, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodels:DiskItemViewModel">
+                                <TextBlock Text="{x:Bind DisplayName}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <ComboBox
+                        Grid.Column="1"
+                        MinWidth="240"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="Taille minimale des dossiers"
+                        IsEnabled="{x:Bind ViewModel.CanChangeSettings, Mode=OneWay}"
+                        ItemsSource="{x:Bind ViewModel.SizeOptions}"
+                        SelectedIndex="{x:Bind ViewModel.SelectedSizeIndex, Mode=TwoWay}" />
+                    <controls:ShinyButton
+                        Grid.Column="2"
+                        Padding="30,9"
+                        Command="{x:Bind ViewModel.AnalyzeCommand}"
+                        Content="Analyser" />
+                </Grid>
+
+                <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.IsIdle, Mode=OneWay}">
+                    <TextBlock
+                        Style="{StaticResource MutedTextStyle}"
+                        Text="Choisis un disque puis lance l'analyse. Clean ne propose un dossier que si le fichier de projet qui l'explique est à côté (package.json, .csproj, Cargo.toml…). Tout reste restaurable 7 jours depuis l'Historique."
+                        TextWrapping="Wrap" />
+                </Border>
+
+                <controls:FileToolStatus SecondaryLabel="DONNÉES EXAMINÉES" ViewModel="{x:Bind ViewModel}" />
+
+                <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.HasNoFolders, Mode=OneWay}">
+                    <StackPanel Spacing="6">
+                        <TextBlock
+                            FontSize="16"
+                            FontWeight="SemiBold"
+                            Text="Aucun dossier de développement trouvé" />
+                        <TextBlock Style="{StaticResource MutedTextStyle}" Text="Rien à récupérer ici, ou la taille minimale choisie est trop haute." />
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.HasFolders, Mode=OneWay}">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="RÉCUPÉRABLE" />
+                                <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.TotalText, Mode=OneWay}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="DOSSIERS" />
+                                <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.CountText, Mode=OneWay}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                            <StackPanel Spacing="6">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="PROJETS INUTILISÉS DEPUIS 30 JOURS" />
+                                <TextBlock Style="{StaticResource KpiValueStyle}" Text="{x:Bind ViewModel.InactiveText, Mode=OneWay}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="16">
+                            <StackPanel Spacing="2">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="PAR OUTIL" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="La place prise par chaque sorte de dossier." />
+                            </StackPanel>
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.ByKind, Mode=OneWay}">
+                                <ItemsRepeater.Layout>
+                                    <StackLayout Spacing="16" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="viewmodels:ShareRow">
+                                        <StackPanel Spacing="6">
+                                            <Grid ColumnSpacing="12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock
+                                                    FontSize="13"
+                                                    FontWeight="SemiBold"
+                                                    Text="{x:Bind Label}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    FontSize="13"
+                                                    FontWeight="SemiBold"
+                                                    Text="{x:Bind SizeText}" />
+                                            </Grid>
+                                            <Grid Height="6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="{x:Bind BarWidth}" />
+                                                    <ColumnDefinition Width="{x:Bind BarRest}" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.ColumnSpan="2" Background="{StaticResource SegmentEmptyBrush}" CornerRadius="3" />
+                                                <Border Background="{x:Bind Brush}" CornerRadius="3" />
+                                            </Grid>
+                                            <TextBlock FontSize="12" Foreground="{StaticResource MutedTextBrush}" Text="{x:Bind DetailText}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardStyle}">
+                        <Grid ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="SÉLECTION" />
+                                <TextBlock Style="{StaticResource MutedTextStyle}" Text="{x:Bind ViewModel.SelectionText, Mode=OneWay}" />
+                            </StackPanel>
+                            <Button
+                                Grid.Column="1"
+                                Padding="14,8"
+                                Command="{x:Bind ViewModel.SelectInactiveCommand}"
+                                Content="Projets inutilisés"
+                                Style="{StaticResource LiquidButtonStyle}" />
+                            <Button
+                                Grid.Column="2"
+                                Padding="14,8"
+                                Command="{x:Bind ViewModel.SelectNoneCommand}"
+                                Content="Rien"
+                                Style="{StaticResource LiquidButtonStyle}" />
+                            <controls:ShinyButton
+                                Grid.Column="3"
+                                Padding="30,9"
+                                Command="{x:Bind ViewModel.RemoveCommand}"
+                                Content="{x:Bind ViewModel.RemoveButtonText, Mode=OneWay}" />
+                        </Grid>
+                    </Border>
+
+                    <StackPanel Spacing="10">
+                        <TextBlock Style="{StaticResource CardLabelTextStyle}" Text="{x:Bind ViewModel.ListCountText, Mode=OneWay}" />
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Rows, Mode=OneWay}">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Spacing="6" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodels:DevFolderRow">
+                                    <Grid
+                                        Padding="14,10"
+                                        Background="{StaticResource CardBackgroundBrush}"
+                                        BorderBrush="{StaticResource CardBorderBrush}"
+                                        BorderThickness="1"
+                                        ColumnSpacing="16"
+                                        CornerRadius="10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="220" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox
+                                            MinWidth="0"
+                                            VerticalAlignment="Center"
+                                            AutomationProperties.Name="{x:Bind ProjectName}"
+                                            IsChecked="{x:Bind IsSelected, Mode=TwoWay}" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock
+                                                    FontSize="14"
+                                                    FontWeight="SemiBold"
+                                                    Text="{x:Bind ProjectName}" />
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    FontSize="12"
+                                                    Foreground="{StaticResource MutedTextBrush}"
+                                                    Text="{x:Bind KindTitle}" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                FontSize="12"
+                                                Foreground="{StaticResource MutedTextBrush}"
+                                                Text="{x:Bind Explanation}"
+                                                TextWrapping="Wrap" />
+                                            <TextBlock
+                                                FontSize="12"
+                                                Foreground="{StaticResource MutedTextBrush}"
+                                                Text="{x:Bind RestoreText}" />
+                                            <TextBlock
+                                                FontSize="11"
+                                                Foreground="{StaticResource MutedTextBrush}"
+                                                Opacity="0.8"
+                                                Text="{x:Bind Path}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <TextBlock
+                                                FontSize="12"
+                                                Foreground="{StaticResource CautionBrush}"
+                                                Text="{x:Bind ActiveText}"
+                                                Visibility="{x:Bind IsActive}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="5">
+                                            <TextBlock
+                                                HorizontalAlignment="Right"
+                                                FontSize="13"
+                                                FontWeight="SemiBold"
+                                                Text="{x:Bind SizeText}" />
+                                            <Grid Height="4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="{x:Bind BarWidth}" />
+                                                    <ColumnDefinition Width="{x:Bind BarRest}" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.ColumnSpan="2" Background="{StaticResource SegmentEmptyBrush}" CornerRadius="2" />
+                                                <Border Background="{x:Bind BarBrush}" CornerRadius="2" />
+                                            </Grid>
+                                            <TextBlock
+                                                HorizontalAlignment="Right"
+                                                FontSize="12"
+                                                Foreground="{StaticResource MutedTextBrush}"
+                                                Text="{x:Bind AgeText}" />
+                                        </StackPanel>
+                                        <Button
+                                            Grid.Column="3"
+                                            Padding="12,4"
+                                            VerticalAlignment="Center"
+                                            Click="OnRevealClicked"
+                                            Content="Ouvrir"
+                                            Style="{StaticResource LiquidButtonStyle}"
+                                            Tag="{x:Bind Path}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

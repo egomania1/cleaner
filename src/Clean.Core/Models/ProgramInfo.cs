@@ -7,4 +7,5 @@ public sealed record ProgramInfo(
     string? Version,
     DateOnly? InstalledOn,
     string? Location,
-    long? EstimatedSizeBytes = null);
+    long? EstimatedSizeBytes = null,
+    string? UninstallCommand = null);

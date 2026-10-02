@@ -19,6 +19,7 @@ public sealed class LargeFilesViewModel : FileToolViewModel
 
     private static readonly long[] MinimumSizes = [100L << 20, 500L << 20, 1L << 30];
 
+    private readonly IFileScanner _scanner;
     private readonly IInstalledProgramCatalog _programs;
     private readonly TimeProvider _clock;
     private IReadOnlyList<LargeFileRow> _all = [];
@@ -41,8 +42,9 @@ public sealed class LargeFilesViewModel : FileToolViewModel
         TimeProvider clock,
         NavigationService navigation,
         ILogger<LargeFilesViewModel> logger)
-        : base(diskService, scanner, remover, explorer, license, navigation, logger)
+        : base(diskService, remover, explorer, license, navigation, logger)
     {
+        _scanner = scanner;
         _programs = programs;
         _clock = clock;
         SelectNoneCommand = new RelayCommand(() => SetSelection(_ => false));
@@ -192,7 +194,7 @@ public sealed class LargeFilesViewModel : FileToolViewModel
             ShowScanProgress(report);
             SecondaryProgressText = ByteSize.Format(report.BytesAnalyzed);
         });
-        var scan = await Scanner.ScanAsync(disk.Disk.RootPath, MinimumSizes[Math.Clamp(SelectedSizeIndex, 0, MinimumSizes.Length - 1)], progress, cancellationToken);
+        var scan = await _scanner.ScanAsync(disk.Disk.RootPath, MinimumSizes[Math.Clamp(SelectedSizeIndex, 0, MinimumSizes.Length - 1)], progress, cancellationToken);
 
         var now = _clock.GetUtcNow().UtcDateTime;
         var largest = scan.Files.Select(file => file.SizeBytes).DefaultIfEmpty(0).Max();

@@ -25,11 +25,7 @@ public sealed partial class MainWindow : Window
         ["large-files"] = typeof(LargeFilesPage),
         ["settings"] = typeof(SettingsPage),
         ["startup"] = typeof(StartupPage),
-    };
-
-    private static readonly Dictionary<string, PlaceholderContent> UpcomingPages = new()
-    {
-        ["developer"] = new("07", "Développeur", "Les dossiers node_modules, bin/obj et les caches npm, NuGet ou pip."),
+        ["developer"] = typeof(DeveloperPage),
     };
 
     private static readonly NavItem[] NavItems =
@@ -89,10 +85,6 @@ public sealed partial class MainWindow : Window
         if (Pages.TryGetValue(tag, out var pageType))
         {
             ContentFrame.Navigate(pageType);
-        }
-        else if (UpcomingPages.TryGetValue(tag, out var content))
-        {
-            ContentFrame.Navigate(typeof(PlaceholderPage), content);
         }
     }
 }

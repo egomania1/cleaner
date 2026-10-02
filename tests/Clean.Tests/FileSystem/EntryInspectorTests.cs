@@ -98,5 +98,9 @@ public sealed class EntryInspectorTests : IDisposable
 
         public IReadOnlyList<ProgramInfo> ProgramsAt(string path) =>
             Programs.Where(program => string.Equals(program.Location, path, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        public void Reload()
+        {
+        }
     }
 }

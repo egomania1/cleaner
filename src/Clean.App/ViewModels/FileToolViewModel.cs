@@ -37,7 +37,6 @@ public abstract class FileToolViewModel : ObservableObject
 
     protected FileToolViewModel(
         IDiskService diskService,
-        IFileScanner scanner,
         IFileRemover remover,
         IFileExplorer explorer,
         ILicenseService license,
@@ -46,7 +45,6 @@ public abstract class FileToolViewModel : ObservableObject
     {
         _license = license;
         _diskService = diskService;
-        Scanner = scanner;
         _remover = remover;
         _explorer = explorer;
         Logger = logger;
@@ -176,8 +174,6 @@ public abstract class FileToolViewModel : ObservableObject
     public string SkippedRemovalsText => _removal is { } result
         ? $"{(result.LockedFileCount + result.KeptRecentFileCount).ToString("N0", French)} fichier(s) gardé(s) : ouverts dans une application, modifiés depuis l'analyse, ou leur copie à garder avait disparu."
         : string.Empty;
-
-    protected IFileScanner Scanner { get; }
 
     protected ILogger Logger { get; }
 

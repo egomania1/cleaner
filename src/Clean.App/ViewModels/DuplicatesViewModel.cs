@@ -19,6 +19,7 @@ public sealed class DuplicatesViewModel : FileToolViewModel
     private static readonly long[] MinimumSizes = [1L << 20, 10L << 20, 100L << 20];
 
     private readonly IDuplicateFinder _finder;
+    private readonly IFileScanner _scanner;
     private readonly IInstalledProgramCatalog _programs;
     private IReadOnlyList<DuplicateGroup> _groups = [];
     private IReadOnlyList<DuplicateGroupRow> _rows = [];
@@ -37,9 +38,10 @@ public sealed class DuplicatesViewModel : FileToolViewModel
         ILicenseService license,
         NavigationService navigation,
         ILogger<DuplicatesViewModel> logger)
-        : base(diskService, scanner, remover, explorer, license, navigation, logger)
+        : base(diskService, remover, explorer, license, navigation, logger)
     {
         _finder = finder;
+        _scanner = scanner;
         _programs = programs;
         KeepOldestCommand = new RelayCommand(() => ApplyStrategy(KeepStrategy.Oldest));
         KeepNewestCommand = new RelayCommand(() => ApplyStrategy(KeepStrategy.Newest));
@@ -110,7 +112,7 @@ public sealed class DuplicatesViewModel : FileToolViewModel
     protected override async Task AnalyzeCoreAsync(DiskItemViewModel disk, CancellationToken cancellationToken)
     {
         PhaseText = "Liste des fichiers…";
-        var scan = await Scanner.ScanAsync(disk.Disk.RootPath, MinimumSizes[Math.Clamp(SelectedSizeIndex, 0, MinimumSizes.Length - 1)], new Progress<ScanProgress>(ShowScanProgress), cancellationToken);
+        var scan = await _scanner.ScanAsync(disk.Disk.RootPath, MinimumSizes[Math.Clamp(SelectedSizeIndex, 0, MinimumSizes.Length - 1)], new Progress<ScanProgress>(ShowScanProgress), cancellationToken);
         _cloudOnlyCount = scan.CloudOnlyFileCount;
 
         // Copies inside an application's own folder are part of how it works, never clutter.

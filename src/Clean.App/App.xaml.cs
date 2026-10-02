@@ -4,6 +4,7 @@ using Clean.Core.Browsers;
 using Clean.Core.Files;
 using Clean.Core.Interfaces;
 using Clean.Core.Logging;
+using Clean.Core.Maintenance;
 using Clean.Core.Models;
 using Clean.Core.Rules;
 using Clean.Core.Safety;
@@ -16,6 +17,8 @@ using Clean.Infrastructure.Licensing;
 using Clean.Infrastructure.Logging;
 using Clean.Infrastructure.Rules;
 using Clean.Infrastructure.Scanning;
+using Clean.Infrastructure.Settings;
+using Clean.Infrastructure.Uninstall;
 using Clean.Infrastructure.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -62,9 +65,37 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        if (Environment.GetCommandLineArgs().Contains(MaintenanceScheduler.Argument, StringComparer.OrdinalIgnoreCase))
+        {
+            RunMaintenance();
+            return;
+        }
+
         _mainWindow = Services.GetRequiredService<MainWindow>();
         _mainWindow.Activate();
         FreeExpiredArchives();
+    }
+
+    // The scheduled weekly pass: no window, the result goes to the report and the history, then the app ends.
+    private static async void RunMaintenance()
+    {
+        var logger = Services.GetRequiredService<ILogger<App>>();
+        try
+        {
+            var systemDrive = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows))!;
+            var report = await Services.GetRequiredService<MaintenanceRunner>().RunAsync(systemDrive, CancellationToken.None);
+            Services.GetRequiredService<IMaintenanceReportStore>().Save(report);
+            logger.LogInformation("Maintenance finished: {Status}, {Bytes} bytes, {Files} files", report.Status, report.FreedBytes, report.FileCount);
+            await Services.GetRequiredService<ICleaningArchive>().FreeExpiredAsync(CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Maintenance failed");
+        }
+        finally
+        {
+            Current.Exit();
+        }
     }
 
     // Past the restore period, archived files only take space: it is handed back to the disk at startup.
@@ -153,6 +184,16 @@ public partial class App : Application
 
         services.AddSingleton(UserFileScope.ForCurrentUser(CleaningArchive.DefaultFolder));
         services.AddSingleton<IFileScanner, FileScanner>();
+        services.AddSingleton<IDeveloperScanner, DeveloperScanner>();
+        services.AddSingleton<IProgramUninstaller, ProgramUninstaller>();
+        services.AddSingleton<ProtectedPathService>();
+        services.AddSingleton<ILeftoverFinder>(provider => new LeftoverFinder(
+            provider.GetRequiredService<IInstalledProgramCatalog>(),
+            provider.GetRequiredService<IReparsePointDetector>(),
+            provider.GetRequiredService<ProtectedPathService>(),
+            LeftoverFinder.DefaultRoots(),
+            provider.GetRequiredService<ILogger<LeftoverFinder>>()));
+        services.AddSingleton<ILeftoverRemover, LeftoverRemover>();
         services.AddSingleton<IDuplicateFinder, DuplicateFinder>();
         services.AddSingleton<IFileRemover>(provider => new LicensedFileRemover(
             ActivatorUtilities.CreateInstance<FileRemover>(provider),
@@ -167,6 +208,13 @@ public partial class App : Application
         services.AddSingleton<LargeFilesViewModel>();
         services.AddSingleton<LicenseViewModel>();
         services.AddSingleton<StartupViewModel>();
+        services.AddSingleton<DeveloperViewModel>();
+        services.AddSingleton<UninstallViewModel>();
+        services.AddSingleton<ISettingsStore>(_ => new SettingsStore(SettingsStore.DefaultPath));
+        services.AddSingleton<IMaintenanceReportStore>(_ => new MaintenanceReportStore(MaintenanceReportStore.DefaultPath));
+        services.AddSingleton<IMaintenanceScheduler>(provider => new MaintenanceScheduler(Environment.ProcessPath!, provider.GetRequiredService<ILogger<MaintenanceScheduler>>()));
+        services.AddSingleton<IRestorePointService, RestorePointService>();
+        services.AddSingleton<MaintenanceRunner>();
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<MainWindow>();
 

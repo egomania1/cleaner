@@ -1,5 +1,6 @@
 using Clean.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 
@@ -14,9 +15,12 @@ public sealed partial class SettingsPage : Page
 
     public SettingsViewModel ViewModel { get; } = App.Services.GetRequiredService<SettingsViewModel>();
 
-    protected override void OnNavigatedTo(NavigationEventArgs e)
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        ViewModel.License.Refresh();
+        await ViewModel.RefreshAsync();
     }
+
+    private async void OnMaintenanceToggled(object sender, RoutedEventArgs e) =>
+        await ViewModel.SetAutoMaintenanceAsync(((ToggleSwitch)sender).IsOn);
 }

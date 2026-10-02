@@ -18,6 +18,8 @@ public sealed partial class AppsPage : Page
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+        ViewModel.Uninstall.ConfirmAsync = confirmation => ConfirmationDialog.ShowAsync(this, confirmation);
+        ViewModel.Uninstall.PickLeftoversAsync = (program, folders) => LeftoverDialog.ShowAsync(this, program, folders);
         await ViewModel.EnsureLoadedAsync();
         ViewModel.StartMonitoring();
     }
@@ -26,6 +28,8 @@ public sealed partial class AppsPage : Page
     {
         base.OnNavigatedFrom(e);
         ViewModel.StopMonitoring();
+        ViewModel.Uninstall.ConfirmAsync = null;
+        ViewModel.Uninstall.PickLeftoversAsync = null;
     }
 
     private void OnTileSelected(object? sender, string key) => ViewModel.Select(key);

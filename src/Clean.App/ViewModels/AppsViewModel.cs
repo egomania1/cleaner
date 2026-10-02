@@ -61,6 +61,7 @@ public sealed class AppsViewModel : ObservableObject
         IFolderSizer folderSizer,
         IProcessMonitor monitor,
         IFileExplorer explorer,
+        UninstallViewModel uninstall,
         ILogger<AppsViewModel> logger)
     {
         _catalog = catalog;
@@ -68,6 +69,8 @@ public sealed class AppsViewModel : ObservableObject
         _monitor = monitor;
         _explorer = explorer;
         _logger = logger;
+        Uninstall = uninstall;
+        UninstallCommand = new AsyncRelayCommand(UninstallSelectedAsync, () => SelectedApp?.Program is not null);
         OpenLocationCommand = new RelayCommand(() => _explorer.Reveal(SelectedApp!.LocationText!), () => SelectedApp?.HasLocation == true);
         OpenAppsSettingsCommand = new AsyncRelayCommand(async () => await Windows.System.Launcher.LaunchUriAsync(new Uri("ms-settings:appsfeatures")));
         SortRunningByCpuCommand = new RelayCommand(() => SortRunningByMemory = false);
@@ -77,6 +80,10 @@ public sealed class AppsViewModel : ObservableObject
     public ICommand OpenLocationCommand { get; }
 
     public ICommand OpenAppsSettingsCommand { get; }
+
+    public IAsyncRelayCommand UninstallCommand { get; }
+
+    public UninstallViewModel Uninstall { get; }
 
     public ICommand SortRunningByCpuCommand { get; }
 
@@ -150,6 +157,7 @@ public sealed class AppsViewModel : ObservableObject
                 OnPropertyChanged(nameof(HasNoSelection));
                 OnPropertyChanged(nameof(SelectedKey));
                 ((RelayCommand)OpenLocationCommand).NotifyCanExecuteChanged();
+                UninstallCommand.NotifyCanExecuteChanged();
             }
         }
     }
@@ -221,6 +229,21 @@ public sealed class AppsViewModel : ObservableObject
     public string OtherRunningText => _otherRunningCount > 0
         ? $"+ {_otherRunningCount} autre{(_otherRunningCount > 1 ? "s" : string.Empty)} programme{(_otherRunningCount > 1 ? "s" : string.Empty)} en cours, moins actif{(_otherRunningCount > 1 ? "s" : string.Empty)}"
         : string.Empty;
+
+    private async Task UninstallSelectedAsync()
+    {
+        if (SelectedApp is not { Program: { } program } item)
+        {
+            return;
+        }
+
+        if (await Uninstall.RunAsync(program))
+        {
+            _items.Remove(item.Key);
+            SelectedApp = null;
+            RefreshSizes();
+        }
+    }
 
     private IEnumerable<AppItem> Installed => _items.Values.Where(item => item.IsInstalled);
 
